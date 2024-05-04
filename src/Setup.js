@@ -29,8 +29,6 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.z = 30;
 camera.position.y = 6;
 
-
-
 let previousMouseX = 0;
 let previousMouseY = 0;
 
@@ -40,69 +38,106 @@ let mouseYDelta = 0;
 let phi_ = 0;
 let theta_ = 0;
 
-function onMouseMove_(e) {
-  let mouseX = e.pageX - window.innerWidth / 2;
-  let mouseY = e.pageY - window.innerHeight / 2;
+const qx = new THREE.Quaternion();
 
-  mouseXDelta = mouseX - previousMouseX;
-  mouseYDelta = mouseY - previousMouseY;
+document.addEventListener("mousemove", (e) => {
+  if (document.pointerLockElement === document.body) {
+    let mouseX = e.pageX - window.innerWidth / 2;
+    let mouseY = e.pageY - window.innerHeight / 2;
 
-  //camera.rotation.x -= mouseYDelta * 0.01;
-  //camera.rotation.y -= mouseXDelta * 0.01;
+    mouseXDelta = mouseX - previousMouseX;
+    mouseYDelta = mouseY - previousMouseY;
 
-  const xh = mouseXDelta / window.innerWidth;
-  const yh = mouseYDelta / window.innerHeight;
+    //console.log(e.movementX, e.movementY);
+    const xh = e.movementX * 0.0005; //mouseXDelta / window.innerWidth;
+    const yh = e.movementY * 0.0005; //mouseYDelta / window.innerHeight;
 
-  phi_ += -xh * 8;
-  theta_ = clamp(theta_ + -yh * 5, -Math.PI / 3, Math.PI / 3);
+    phi_ += -xh * 8;
+    theta_ = clamp(theta_ + -yh * 5, -Math.PI / 3, Math.PI / 3);
 
-  const qx = new THREE.Quaternion();
-  qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi_);
-  const qz = new THREE.Quaternion();
-  qz.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta_);
-
-  const q = new THREE.Quaternion();
-  q.multiply(qx);
-  q.multiply(qz);
-
-  camera.quaternion.copy(q);
-
-  previousMouseX = mouseX;
-  previousMouseY = mouseY;
-}
-
-document.addEventListener("keydown", (e) => onKeyDown_(e), false);
-//document.addEventListener("keyup", (e) => onKeyUp_(e), false);
-function key(keyCode) {
-  return !!this.keys_[keyCode];
-}
-function onKeyDown_(e) {
-  let test = new THREE.Vector3();
-  console.log("hej");
-
-  const forwardVelocity = (key(KEYS.w) ? 1 : 0) + (key(KEYS.s) ? -1 : 0)
-    const strafeVelocity = (key(KEYS.a) ? 1 : 0) + (key(KEYS.d) ? -1 : 0)
-
-    const qx = new THREE.Quaternion();
     qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi_);
+    const qz = new THREE.Quaternion();
+    qz.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta_);
 
-    const forward = new THREE.Vector3(0, 0, -1);
-    forward.applyQuaternion(qx);
-    forward.multiplyScalar(forwardVelocity * timeElapsedS * 10);
+    const q = new THREE.Quaternion();
+    q.multiply(qx);
+    q.multiply(qz);
 
-    const left = new THREE.Vector3(-1, 0, 0);
-    left.applyQuaternion(qx);
-    left.multiplyScalar(strafeVelocity * timeElapsedS * 10);
+    camera.quaternion.copy(q);
 
-    camera.translation_.add(forward);
-    camera.translation_.add(left);
+    previousMouseX = mouseX;
+    previousMouseY = mouseY;
+  }
+});
 
-    //if (forwardVelocity != 0 || strafeVelocity != 0) {
-      //this.headBobActive_ = true;
-    //}
+let forwardBool,
+  backwardBool,
+  leftBool,
+  rightBool = false;
+
+const instructions = document.getElementById("instructions");
+
+document.body.onclick = () => {
+  if (document.pointerLockElement !== document.body) {
+    document.body.requestPointerLock();
+  }
+};
+
+document.addEventListener("pointerlockchange", (e) => {
+  if (document.pointerLockElement === document.body) {
+    instructions.style.display = "none";
+  } else {
+    instructions.style.display = "";
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (document.pointerLockElement === document.body) {
+    if (e.keyCode == 87) forwardBool = true;
+    if (e.keyCode == 83) backwardBool = true;
+    if (e.keyCode == 65) leftBool = true;
+    if (e.keyCode == 68) rightBool = true;
+  }
+});
+
+document.addEventListener("keyup", (e) => {
+  if (e.keyCode == 87) forwardBool = false;
+  if (e.keyCode == 83) backwardBool = false;
+  if (e.keyCode == 65) leftBool = false;
+  if (e.keyCode == 68) rightBool = false;
+});
+
+function move() {
+  let speed = 0.1;
+  if (forwardBool) {
+    const forwardMovement = new THREE.Vector3(0, 0, -1);
+    forwardMovement.applyQuaternion(qx);
+    forwardMovement.multiplyScalar(speed);
+
+    camera.position.add(forwardMovement);
+  }
+  if (backwardBool) {
+    const backwardMovement = new THREE.Vector3(0, 0, 1);
+    backwardMovement.applyQuaternion(qx);
+    backwardMovement.multiplyScalar(speed);
+
+    camera.position.add(backwardMovement);
+  }
+  if (leftBool) {
+    const leftMovement = new THREE.Vector3(-1, 0, 0);
+    leftMovement.applyQuaternion(qx);
+    leftMovement.multiplyScalar(speed);
+
+    camera.position.add(leftMovement);
+  }
+  if (rightBool) {
+    const rightMovement = new THREE.Vector3(1, 0, 0);
+    rightMovement.applyQuaternion(qx);
+    rightMovement.multiplyScalar(speed);
+
+    camera.position.add(rightMovement);
+  }
 }
-
-//controls.update();
 
 let dirLight = new THREE.DirectionalLight(0xffffff, 1);
 dirLight.castShadow = true;
@@ -183,4 +218,4 @@ function clamp(x, a, b) {
   return Math.min(Math.max(x, a), b);
 }
 
-export { camera, scene, renderer, world, composer };
+export { camera, scene, renderer, world, composer, move };
