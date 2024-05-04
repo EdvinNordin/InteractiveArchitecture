@@ -1,17 +1,19 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
+
+import { camera } from "./Inputs.js";
 import { Sky } from "./Sky.js";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { SAOPass } from "three/addons/postprocessing/SAOPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
+let sky, sun, composer, renderPass, saoPass;
+
 const scene = new THREE.Scene();
 
 const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
-
-window.addEventListener("resize", onWindowResize);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.shadowMap.enabled = true;
@@ -20,136 +22,18 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  1,
-  100
-);
-camera.position.z = 30;
-camera.position.y = 6;
-
-let previousMouseX = 0;
-let previousMouseY = 0;
-
-let mouseXDelta = 0;
-let mouseYDelta = 0;
-
-let phi_ = 0;
-let theta_ = 0;
-
-const qx = new THREE.Quaternion();
-
-document.addEventListener("mousemove", (e) => {
-  if (document.pointerLockElement === document.body) {
-    let mouseX = e.pageX - window.innerWidth / 2;
-    let mouseY = e.pageY - window.innerHeight / 2;
-
-    mouseXDelta = mouseX - previousMouseX;
-    mouseYDelta = mouseY - previousMouseY;
-
-    //console.log(e.movementX, e.movementY);
-    const xh = e.movementX * 0.0005; //mouseXDelta / window.innerWidth;
-    const yh = e.movementY * 0.0005; //mouseYDelta / window.innerHeight;
-
-    phi_ += -xh * 8;
-    theta_ = clamp(theta_ + -yh * 5, -Math.PI / 3, Math.PI / 3);
-
-    qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi_);
-    const qz = new THREE.Quaternion();
-    qz.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta_);
-
-    const q = new THREE.Quaternion();
-    q.multiply(qx);
-    q.multiply(qz);
-
-    camera.quaternion.copy(q);
-
-    previousMouseX = mouseX;
-    previousMouseY = mouseY;
-  }
-});
-
-let forwardBool,
-  backwardBool,
-  leftBool,
-  rightBool = false;
-
-const instructions = document.getElementById("instructions");
-
-document.body.onclick = () => {
-  if (document.pointerLockElement !== document.body) {
-    document.body.requestPointerLock();
-  }
-};
-
-document.addEventListener("pointerlockchange", (e) => {
-  if (document.pointerLockElement === document.body) {
-    instructions.style.display = "none";
-  } else {
-    instructions.style.display = "";
-  }
-});
-
-document.addEventListener("keydown", (e) => {
-  if (document.pointerLockElement === document.body) {
-    if (e.keyCode == 87) forwardBool = true;
-    if (e.keyCode == 83) backwardBool = true;
-    if (e.keyCode == 65) leftBool = true;
-    if (e.keyCode == 68) rightBool = true;
-  }
-});
-
-document.addEventListener("keyup", (e) => {
-  if (e.keyCode == 87) forwardBool = false;
-  if (e.keyCode == 83) backwardBool = false;
-  if (e.keyCode == 65) leftBool = false;
-  if (e.keyCode == 68) rightBool = false;
-});
-
-function move() {
-  let speed = 0.1;
-  if (forwardBool) {
-    const forwardMovement = new THREE.Vector3(0, 0, -1);
-    forwardMovement.applyQuaternion(qx);
-    forwardMovement.multiplyScalar(speed);
-
-    camera.position.add(forwardMovement);
-  }
-  if (backwardBool) {
-    const backwardMovement = new THREE.Vector3(0, 0, 1);
-    backwardMovement.applyQuaternion(qx);
-    backwardMovement.multiplyScalar(speed);
-
-    camera.position.add(backwardMovement);
-  }
-  if (leftBool) {
-    const leftMovement = new THREE.Vector3(-1, 0, 0);
-    leftMovement.applyQuaternion(qx);
-    leftMovement.multiplyScalar(speed);
-
-    camera.position.add(leftMovement);
-  }
-  if (rightBool) {
-    const rightMovement = new THREE.Vector3(1, 0, 0);
-    rightMovement.applyQuaternion(qx);
-    rightMovement.multiplyScalar(speed);
-
-    camera.position.add(rightMovement);
-  }
-}
-
 let dirLight = new THREE.DirectionalLight(0xffffff, 1);
 dirLight.castShadow = true;
 scene.add(dirLight);
-const helper = new THREE.DirectionalLightHelper(dirLight, 1);
-scene.add(helper);
+//const helper = new THREE.DirectionalLightHelper(dirLight, 1);
+//scene.add(helper);
 
-let sky, sun;
+window.addEventListener("resize", onWindowResize);
+
+//Sky shader and sun light
 initSky();
 
 //Scalable Ambient Occlusion (SAO)
-let composer, renderPass, saoPass;
 initSAO();
 
 function initSky() {
@@ -184,7 +68,7 @@ function initSky() {
   dirLight.position.copy(sun).multiplyScalar(100);
 
   renderer.toneMappingExposure = effectController.exposure;
-  renderer.render(scene, camera);
+  //renderer.render(scene, camera);
 }
 
 function initSAO() {
@@ -214,8 +98,4 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function clamp(x, a, b) {
-  return Math.min(Math.max(x, a), b);
-}
-
-export { camera, scene, renderer, world, composer, move };
+export { camera, scene, renderer, world, composer };

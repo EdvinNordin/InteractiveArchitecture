@@ -1,91 +1,112 @@
-import * as CANNON from "cannon-es";
-import * as THREE from "three"; /*
-/*
-const maxForce = 50;
+import * as THREE from "three";
 
-let forward = false;
-let backward = false;
-let left = false;
-let right = false;
+let forwardBool,
+  backwardBool,
+  leftBool,
+  rightBool = false;
 
-export function moveSphere(sphereBody) {
-  sphereBody.linearDamping = 0.9;
-  document.addEventListener("keydown", (event) => {
-    switch (event.key) {
-      case "ArrowUp":
-      case "w":
-        forward = true;
-        break;
+const instructions = document.getElementById("instructions");
 
-      case "s":
-      case "ArrowDown":
-        backward = true;
-        break;
+let phi_ = 0;
+let theta_ = 0;
 
-      case "a":
-      case "ArrowLeft":
-        left = true;
-        break;
+let qx = new THREE.Quaternion();
 
-      case "d":
-      case "ArrowRight":
-        right = true;
-        break;
-    }
-  });
-  document.addEventListener("keyup", (event) => {
-    switch (event.key) {
-      case "w":
-      case "ArrowUp":
-        forward = false;
-        break;
+let camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  1,
+  100
+);
 
-      case "s":
-      case "ArrowDown":
-        backward = false;
-        break;
+//camera staring pos
+camera.position.z = 30;
+camera.position.y = 6;
 
-      case "a":
-      case "ArrowLeft":
-        left = false;
-        break;
+document.addEventListener("mousemove", (e) => {
+  if (document.pointerLockElement === document.body) {
+    const xh = e.movementX * 0.0005;
+    const yh = e.movementY * 0.0005;
 
-      case "d":
-      case "ArrowRight":
-        right = false;
-        break;
-    }
-  });
+    phi_ += -xh * 8;
+    theta_ = clamp(theta_ + -yh * 5, -Math.PI / 3, Math.PI / 3);
 
-  if (forward) {
-    sphereBody.applyTorque(new CANNON.Vec3(-maxForce, 0, 0));
-  } else {
-    sphereBody.applyTorque(new CANNON.Vec3(0, 0, 0));
+    qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi_);
+    const qz = new THREE.Quaternion();
+    qz.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta_);
+
+    const q = new THREE.Quaternion();
+    q.multiply(qx);
+    q.multiply(qz);
+
+    camera.quaternion.copy(q);
   }
+});
 
-  if (backward) {
-    sphereBody.applyTorque(new CANNON.Vec3(maxForce, 0, 0));
-  } else {
-    sphereBody.applyTorque(new CANNON.Vec3(0, 0, 0));
+document.body.onclick = () => {
+  if (document.pointerLockElement !== document.body) {
+    document.body.requestPointerLock();
   }
+};
 
-  if (left) {
-    sphereBody.applyTorque(new CANNON.Vec3(0, 0, maxForce));
+document.addEventListener("pointerlockchange", (e) => {
+  if (document.pointerLockElement === document.body) {
+    instructions.style.display = "none";
   } else {
-    sphereBody.applyTorque(new CANNON.Vec3(0, 0, 0));
+    instructions.style.display = "";
   }
+});
 
-  if (right) {
-    sphereBody.applyTorque(new CANNON.Vec3(0, 0, -maxForce));
-  } else {
-    sphereBody.applyTorque(new CANNON.Vec3(0, 0, 0));
+document.addEventListener("keydown", (e) => {
+  if (document.pointerLockElement === document.body) {
+    if (e.keyCode == 87) forwardBool = true;
+    if (e.keyCode == 83) backwardBool = true;
+    if (e.keyCode == 65) leftBool = true;
+    if (e.keyCode == 68) rightBool = true;
   }
+});
 
-  return sphereBody;
-}*/
-import { camera } from "./Setup";
+document.addEventListener("keyup", (e) => {
+  if (e.keyCode == 87) forwardBool = false;
+  if (e.keyCode == 83) backwardBool = false;
+  if (e.keyCode == 65) leftBool = false;
+  if (e.keyCode == 68) rightBool = false;
+});
 
+function move() {
+  let speed = 0.1;
+  if (forwardBool) {
+    const forwardMovement = new THREE.Vector3(0, 0, -1);
+    forwardMovement.applyQuaternion(qx);
+    forwardMovement.multiplyScalar(speed);
 
-//document.addEventListener("mousedown", (e) => onMouseDown_(e), false);
-//document.addEventListener("mouseup", (e) => onMouseUp_(e), false);
+    camera.position.add(forwardMovement);
+  }
+  if (backwardBool) {
+    const backwardMovement = new THREE.Vector3(0, 0, 1);
+    backwardMovement.applyQuaternion(qx);
+    backwardMovement.multiplyScalar(speed);
 
+    camera.position.add(backwardMovement);
+  }
+  if (leftBool) {
+    const leftMovement = new THREE.Vector3(-1, 0, 0);
+    leftMovement.applyQuaternion(qx);
+    leftMovement.multiplyScalar(speed);
+
+    camera.position.add(leftMovement);
+  }
+  if (rightBool) {
+    const rightMovement = new THREE.Vector3(1, 0, 0);
+    rightMovement.applyQuaternion(qx);
+    rightMovement.multiplyScalar(speed);
+
+    camera.position.add(rightMovement);
+  }
+}
+
+function clamp(x, a, b) {
+  return Math.min(Math.max(x, a), b);
+}
+
+export { camera, move };
