@@ -82,35 +82,10 @@ export function moveSphere(sphereBody) {
   }
 
   return sphereBody;
-}
-/*
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  1,
-  100
-);
+}*/
+import { camera } from "./Setup";
+
 
 //document.addEventListener("mousedown", (e) => onMouseDown_(e), false);
-document.addEventListener("mousemove", (e) => onMouseMove_(e), false);
 //document.addEventListener("mouseup", (e) => onMouseUp_(e), false);
-//document.addEventListener("keydown", (e) => onKeyDown_(e), false);
-//document.addEventListener("keyup", (e) => onKeyUp_(e), false);
 
-function onMouseMove_(e) {
-  mouseX = e.pageX - window.innerWidth / 2;
-  mouseY = e.pageY - window.innerHeight / 2;
-
-  if (previous_ === null) {
-    previous_ = 0;
-  }
-
-  mouseXDelta = mouseX - previousMouseX;
-  mouseYDelta = mouseY - previousMouseY;
-
-  camera.rotation.x += mouseYDelta * 0.01;
-  camera.rotation.y += mouseXDelta * 0.01;
-  previousMouseX = mouseX;
-  previousMouseY = mouseY;
-}
-*/

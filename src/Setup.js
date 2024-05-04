@@ -29,11 +29,7 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.z = 30;
 camera.position.y = 6;
 
-//document.addEventListener("mousedown", (e) => onMouseDown_(e), false);
-document.addEventListener("mousemove", (e) => onMouseMove_(e), false);
-//document.addEventListener("mouseup", (e) => onMouseUp_(e), false);
-//document.addEventListener("keydown", (e) => onKeyDown_(e), false);
-//document.addEventListener("keyup", (e) => onKeyUp_(e), false);
+
 
 let previousMouseX = 0;
 let previousMouseY = 0;
@@ -74,6 +70,38 @@ function onMouseMove_(e) {
   previousMouseX = mouseX;
   previousMouseY = mouseY;
 }
+
+document.addEventListener("keydown", (e) => onKeyDown_(e), false);
+//document.addEventListener("keyup", (e) => onKeyUp_(e), false);
+function key(keyCode) {
+  return !!this.keys_[keyCode];
+}
+function onKeyDown_(e) {
+  let test = new THREE.Vector3();
+  console.log("hej");
+
+  const forwardVelocity = (key(KEYS.w) ? 1 : 0) + (key(KEYS.s) ? -1 : 0)
+    const strafeVelocity = (key(KEYS.a) ? 1 : 0) + (key(KEYS.d) ? -1 : 0)
+
+    const qx = new THREE.Quaternion();
+    qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi_);
+
+    const forward = new THREE.Vector3(0, 0, -1);
+    forward.applyQuaternion(qx);
+    forward.multiplyScalar(forwardVelocity * timeElapsedS * 10);
+
+    const left = new THREE.Vector3(-1, 0, 0);
+    left.applyQuaternion(qx);
+    left.multiplyScalar(strafeVelocity * timeElapsedS * 10);
+
+    camera.translation_.add(forward);
+    camera.translation_.add(left);
+
+    //if (forwardVelocity != 0 || strafeVelocity != 0) {
+      //this.headBobActive_ = true;
+    //}
+}
+
 //controls.update();
 
 let dirLight = new THREE.DirectionalLight(0xffffff, 1);
