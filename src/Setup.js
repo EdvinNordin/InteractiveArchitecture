@@ -1,13 +1,13 @@
 import * as THREE from "../node_modules/three/build/three.module.js";
-import * as CANNON from "cannon-es";
+import * as CANNON from "../node_modules/cannon-es/dist/cannon-es.js";
 
 import { camera } from "./Inputs.js";
 import { Sky } from "./Sky.js";
 
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { SAOPass } from "three/addons/postprocessing/SAOPass.js";
-import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { EffectComposer } from "../node_modules/three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "../node_modules/three/examples/jsm/postprocessing/RenderPass.js";
+import { SAOPass } from "../node_modules/three/examples/jsm/postprocessing/SAOPass.js";
+import { OutputPass } from "../node_modules/three/examples/jsm/postprocessing/OutputPass.js";
 
 let sky, sun, composer, renderPass, saoPass;
 
