@@ -8,7 +8,7 @@ import { Sky } from "./Sky.js";
 import { RenderPass } from "../node_modules/three/examples/jsm/postprocessing/RenderPass.js";
 import { SAOPass } from "../node_modules/three/examples/jsm/postprocessing/SAOPass.js";
 import { OutputPass } from "../node_modules/three/examples/jsm/postprocessing/OutputPass.js";
-/*
+*/
 let sky, sun, composer, renderPass, saoPass;
 
 const scene = new THREE.Scene();
@@ -96,7 +96,7 @@ function initSAO() {
   saoPass.params.saoBlurStdDev = 4;
   saoPass.params.saoBlurDepthCutoff = 0.01;
   saoPass.enabled = true;
-}/*
+} */
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
