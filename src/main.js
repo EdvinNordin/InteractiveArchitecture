@@ -92,7 +92,7 @@ function animate() {
   renderer.render(scene, camera);
 
   // Render the effect composer (post processing)
-  composer.render();
+  //composer.render();
 }
 
 // Copy coordinates from Cannon.js to Three.js
