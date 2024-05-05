@@ -24,7 +24,7 @@ import {
   Sprite,
   SpriteMaterial,
   TextureLoader,
-} from "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js";
+} from "three"; //""https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js";
 
 import { EXRLoader } from "./loaderExtra/EXRLoader.js";
 
