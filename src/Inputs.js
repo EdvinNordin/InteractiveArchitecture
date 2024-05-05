@@ -1,4 +1,4 @@
-import * as THREE from "../node_modules/three/build/three.module.js";
+import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js";
 
 let forwardBool,
   backwardBool,

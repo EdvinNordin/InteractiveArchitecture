@@ -1,5 +1,5 @@
-import * as THREE from "../node_modules/three/build/three.module.js";
-import * as CANNON from "../node_modules/cannon-es/dist/cannon-es.js";
+import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js";
+import * as CANNON from "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/+esm";
 
 export function newObject(type) {
   let cannonBody, threeMesh;

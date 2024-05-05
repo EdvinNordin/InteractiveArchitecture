@@ -1,10 +1,10 @@
-import * as THREE from "../node_modules/three/build/three.module.js";
-import * as CANNON from "../node_modules/cannon-es/dist/cannon-es.js";
+import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js";
+import * as CANNON from "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/+esm";
 
 import { camera } from "./Inputs.js";
 import { Sky } from "./Sky.js";
 
-import { EffectComposer } from "../node_modules/three/examples/jsm/postprocessing/EffectComposer.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js"; //"../node_modules/three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "../node_modules/three/examples/jsm/postprocessing/RenderPass.js";
 import { SAOPass } from "../node_modules/three/examples/jsm/postprocessing/SAOPass.js";
 import { OutputPass } from "../node_modules/three/examples/jsm/postprocessing/OutputPass.js";
