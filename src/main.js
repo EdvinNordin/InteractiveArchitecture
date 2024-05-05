@@ -1,4 +1,4 @@
-import { THREE } from "../dist/test.js"; //"https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js";
+import * as THREE from "three"; //"https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js";
 //import * as CANNON from "https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.js";
 
 import { camera, scene, renderer, world, composer } from "./Setup.js";

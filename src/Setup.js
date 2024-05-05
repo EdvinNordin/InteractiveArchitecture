@@ -1,5 +1,5 @@
-import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js";
-import * as CANNON from "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/+esm";
+import * as THREE from "three"; //"https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js";
+import * as CANNON from "cannon-es"; //"https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/+esm";
 
 import { camera } from "./Inputs.js";
 import { Sky } from "./Sky.js";
