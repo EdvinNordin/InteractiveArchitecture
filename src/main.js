@@ -55,8 +55,7 @@ loader.load(
       });
       world.addBody(childBody);
     });
-    //object.scale.set(0.1, 0.1, 0.1);
-    //scene.add(object);
+    scene.add(object);
   },
   function (progress) {
     //console.log((progress.loaded / progress.total) * 100 + "%");
@@ -71,9 +70,9 @@ cameraBody.addShape(new CANNON.Sphere(1));
 cameraBody.position.set(0, 8, 30);
 world.addBody(cameraBody);
 
-cameraBody.addEventListener("collide", (event) => {
+/*cameraBody.addEventListener("collide", (event) => {
   console.log(event);
-});
+});*/
 
 const cannonDebugger = new CannonDebugger(scene, world);
 
@@ -92,7 +91,7 @@ function animate() {
   // Copy phyics pos and rot to renderer
   cannonToThree();
 
-  cannonDebugger.update();
+  //cannonDebugger.update();
   // Render three.js
   renderer.render(scene, camera);
 
