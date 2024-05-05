@@ -1,11 +1,11 @@
-import * as THREE from "../node_modules/three/build/three.module.js";
-import * as CANNON from "../node_modules/cannon-es/dist/cannon-es.js";
+import * as THREE from "./node_modules/three/build/three.module.js";
+import * as CANNON from "./node_modules/cannon-es/dist/cannon-es.js";
 
 import { camera, scene, renderer, world, composer } from "./Setup.js";
 import * as createObject from "./Objects.js";
 import { move } from "./Inputs.js";
 
-import { Rhino3dmLoader } from "../node_modules/three/examples/jsm/loaders/3DMLoader.js";
+import { Rhino3dmLoader } from "./node_modules/three/examples/jsm/loaders/3DMLoader.js";
 
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
 
