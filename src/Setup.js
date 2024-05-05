@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as THREE from "../node_modules/three/build/three.module.js";
 import * as CANNON from "cannon-es";
 
 import { camera } from "./Inputs.js";
@@ -24,6 +24,12 @@ document.body.appendChild(renderer.domElement);
 
 let dirLight = new THREE.DirectionalLight(0xffffff, 1);
 dirLight.castShadow = true;
+dirLight.shadow.mapSize.width = 2048;
+dirLight.shadow.mapSize.height = 2048;
+dirLight.shadow.camera.top = 50;
+dirLight.shadow.camera.bottom = -50;
+dirLight.shadow.camera.left = -50;
+dirLight.shadow.camera.right = 50;
 scene.add(dirLight);
 //const helper = new THREE.DirectionalLightHelper(dirLight, 1);
 //scene.add(helper);
@@ -48,7 +54,7 @@ function initSky() {
     rayleigh: 0.2,
     mieCoefficient: 0.005,
     mieDirectionalG: 0.7,
-    elevation: 20,
+    elevation: 15,
     azimuth: 100,
     exposure: renderer.toneMappingExposure,
   };
@@ -65,7 +71,7 @@ function initSky() {
   sun.setFromSphericalCoords(1, phi, theta);
 
   uniforms["sunPosition"].value.copy(sun);
-  dirLight.position.copy(sun).multiplyScalar(100);
+  dirLight.position.copy(sun); //.multiplyScalar(100);
 
   renderer.toneMappingExposure = effectController.exposure;
   //renderer.render(scene, camera);

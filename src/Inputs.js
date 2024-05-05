@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as THREE from "../node_modules/three/build/three.module.js";
 
 let forwardBool,
   backwardBool,
@@ -21,7 +21,7 @@ let camera = new THREE.PerspectiveCamera(
 
 //camera staring pos
 camera.position.z = 30;
-camera.position.y = 6;
+camera.position.y = 8;
 
 document.addEventListener("mousemove", (e) => {
   if (document.pointerLockElement === document.body) {
