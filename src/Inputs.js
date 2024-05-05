@@ -16,7 +16,7 @@ let camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   1,
-  100
+  1000
 );
 
 //camera staring pos

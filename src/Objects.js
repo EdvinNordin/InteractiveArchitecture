@@ -61,6 +61,7 @@ export function newObject(type) {
       color: 0x00ff00,
       side: THREE.DoubleSide,
     });
+
     threeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
     threeMesh.receiveShadow = true;
     threeMesh.position.copy(cannonBody.position);

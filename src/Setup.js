@@ -4,11 +4,11 @@ import * as CANNON from "cannon-es"; //"https://cdn.jsdelivr.net/npm/cannon-es@0
 import { camera } from "./Inputs.js";
 import { Sky } from "./Sky.js";
 
-/*import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js"; //"../node_modules/three/examples/jsm/postprocessing/EffectComposer.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js"; //"../node_modules/three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "../node_modules/three/examples/jsm/postprocessing/RenderPass.js";
 import { SAOPass } from "../node_modules/three/examples/jsm/postprocessing/SAOPass.js";
 import { OutputPass } from "../node_modules/three/examples/jsm/postprocessing/OutputPass.js";
-*/
+
 let sky, sun, composer, renderPass, saoPass;
 
 const scene = new THREE.Scene();
@@ -34,13 +34,16 @@ scene.add(dirLight);
 //const helper = new THREE.DirectionalLightHelper(dirLight, 1);
 //scene.add(helper);
 
+let ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+scene.add(ambientLight);
+
 window.addEventListener("resize", onWindowResize);
 
 //Sky shader and sun light
 initSky();
 
 //Scalable Ambient Occlusion (SAO)
-//initSAO();
+initSAO();
 
 function initSky() {
   sky = new Sky();
@@ -54,8 +57,8 @@ function initSky() {
     rayleigh: 0.2,
     mieCoefficient: 0.005,
     mieDirectionalG: 0.7,
-    elevation: 15,
-    azimuth: 100,
+    elevation: 25,
+    azimuth: 80,
     exposure: renderer.toneMappingExposure,
   };
 
@@ -76,7 +79,7 @@ function initSky() {
   renderer.toneMappingExposure = effectController.exposure;
   //renderer.render(scene, camera);
 }
-/*
+
 function initSAO() {
   composer = new EffectComposer(renderer);
   renderPass = new RenderPass(scene, camera);
@@ -91,12 +94,12 @@ function initSAO() {
   saoPass.params.saoScale = 1;
   saoPass.params.saoKernelRadius = 100;
   saoPass.params.saoMinResolution = 0;
-  saoPass.params.saoBlur = true;
+  saoPass.params.saoBlur = false;
   saoPass.params.saoBlurRadius = 8;
   saoPass.params.saoBlurStdDev = 4;
   saoPass.params.saoBlurDepthCutoff = 0.01;
   saoPass.enabled = true;
-} */
+}
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
