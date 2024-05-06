@@ -1,7 +1,7 @@
 import * as THREE from "three"; //"https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js";
 import * as CANNON from "cannon-es"; //"https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/+esm";
 
-import { camera } from "./Inputs.js";
+//import { camera } from "./Inputs.js";
 import { Sky } from "./Sky.js";
 
 import { EffectComposer } from "../node_modules/three/examples/jsm/postprocessing/EffectComposer.js";
@@ -22,6 +22,14 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+let camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  1,
+  1000
+);
+camera.position.set(0, 8, 110);
+
 let dirLight = new THREE.DirectionalLight(0xffffff, 1);
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.width = 2048;
@@ -34,7 +42,7 @@ scene.add(dirLight);
 //const helper = new THREE.DirectionalLightHelper(dirLight, 1);
 //scene.add(helper);
 
-let ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+let ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
 scene.add(ambientLight);
 
 window.addEventListener("resize", onWindowResize);
@@ -43,7 +51,7 @@ window.addEventListener("resize", onWindowResize);
 initSky();
 
 //Scalable Ambient Occlusion (SAO)
-initSAO();
+//initSAO();
 
 function initSky() {
   sky = new Sky();

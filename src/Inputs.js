@@ -1,27 +1,30 @@
 import * as THREE from "three"; //"https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js";
+import * as CANNON from "cannon-es";
+
+import { world } from "./Setup.js";
 
 let forwardBool,
   backwardBool,
   leftBool,
-  rightBool = false;
+  rightBool,
+  upBool,
+  downBool = false;
 
 const instructions = document.getElementById("instructions");
 
 let phi_ = 0;
 let theta_ = 0;
 
-let qx = new THREE.Quaternion();
+let qx = new CANNON.Quaternion();
 
-let camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  1,
-  1000
-);
-
-//camera staring pos
-camera.position.z = 30;
-camera.position.y = 8;
+let cameraBody = new CANNON.Body({
+  mass: 0,
+  shape: new CANNON.Box(new CANNON.Vec3(1, 1, 1)),
+  position: new CANNON.Vec3(0, 1, 100),
+});
+cameraBody.angularDamping = 1;
+cameraBody.linearDamping = 1;
+world.addBody(cameraBody);
 
 document.addEventListener("mousemove", (e) => {
   if (document.pointerLockElement === document.body) {
@@ -31,15 +34,16 @@ document.addEventListener("mousemove", (e) => {
     phi_ += -xh * 8;
     theta_ = clamp(theta_ + -yh * 5, -Math.PI / 3, Math.PI / 3);
 
-    qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi_);
-    const qz = new THREE.Quaternion();
-    qz.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta_);
+    qx.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), phi_);
+    let qz = new CANNON.Quaternion();
+    qz.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), theta_);
 
-    const q = new THREE.Quaternion();
-    q.multiply(qx);
-    q.multiply(qz);
+    let q = new CANNON.Quaternion(0, 0, 0, 0);
+    q = qx.mult(qz);
+    //qx.mult(qz);
+    //console.log(q);
 
-    camera.quaternion.copy(q);
+    cameraBody.quaternion.copy(q);
   }
 });
 
@@ -63,6 +67,8 @@ document.addEventListener("keydown", (e) => {
     if (e.keyCode == 83) backwardBool = true;
     if (e.keyCode == 65) leftBool = true;
     if (e.keyCode == 68) rightBool = true;
+    if (e.keyCode == 32) upBool = true;
+    if (e.keyCode == 16) downBool = true;
   }
 });
 
@@ -71,37 +77,61 @@ document.addEventListener("keyup", (e) => {
   if (e.keyCode == 83) backwardBool = false;
   if (e.keyCode == 65) leftBool = false;
   if (e.keyCode == 68) rightBool = false;
+  if (e.keyCode == 32) upBool = false;
+  if (e.keyCode == 16) downBool = false;
 });
 
 function move() {
   let speed = 0.1;
   if (forwardBool) {
-    const forwardMovement = new THREE.Vector3(0, 0, -1);
-    forwardMovement.applyQuaternion(qx);
-    forwardMovement.multiplyScalar(speed);
+    let forwardMovement = new CANNON.Vec3(0, 0, -1);
+    forwardMovement = applyQuaternion(forwardMovement, qx);
+    forwardMovement.scale(10000);
 
-    camera.position.add(forwardMovement);
+    //cameraBody.position = cameraBody.position.vadd(forwardMovement);
+
+    cameraBody.velocity = forwardMovement;
+
+    //console.log(cameraBody);
+    //cameraBody.position += forwardMovement;
   }
   if (backwardBool) {
-    const backwardMovement = new THREE.Vector3(0, 0, 1);
-    backwardMovement.applyQuaternion(qx);
-    backwardMovement.multiplyScalar(speed);
+    let backwardMovement = new CANNON.Vec3(0, 0, 1);
+    backwardMovement = applyQuaternion(backwardMovement, qx);
+    backwardMovement.scale(speed);
 
-    camera.position.add(backwardMovement);
+    cameraBody.position = cameraBody.position.vadd(backwardMovement);
+    //cameraBody.position += backwardMovement;
   }
   if (leftBool) {
-    const leftMovement = new THREE.Vector3(-1, 0, 0);
-    leftMovement.applyQuaternion(qx);
-    leftMovement.multiplyScalar(speed);
+    let leftMovement = new CANNON.Vec3(-1, 0, 0);
+    leftMovement = applyQuaternion(leftMovement, qx);
+    leftMovement.scale(speed);
 
-    camera.position.add(leftMovement);
+    cameraBody.position = cameraBody.position.vadd(leftMovement);
+    //cameraBody.position += leftMovement;
   }
   if (rightBool) {
-    const rightMovement = new THREE.Vector3(1, 0, 0);
-    rightMovement.applyQuaternion(qx);
-    rightMovement.multiplyScalar(speed);
+    let rightMovement = new CANNON.Vec3(1, 0, 0);
+    rightMovement = applyQuaternion(rightMovement, qx);
+    rightMovement.scale(speed);
 
-    camera.position.add(rightMovement);
+    cameraBody.position = cameraBody.position.vadd(rightMovement);
+    //cameraBody.position += rightMovement;
+  }
+  if (upBool) {
+    let upMovement = new CANNON.Vec3(0, 1, 0);
+    upMovement = applyQuaternion(upMovement, qx);
+    upMovement.scale(speed);
+
+    cameraBody.position = cameraBody.position.vadd(upMovement);
+  }
+  if (downBool) {
+    let downMovement = new CANNON.Vec3(0, -1, 0);
+    downMovement = applyQuaternion(downMovement, qx);
+    downMovement.scale(speed);
+
+    cameraBody.position = cameraBody.position.vadd(downMovement);
   }
 }
 
@@ -109,4 +139,27 @@ function clamp(x, a, b) {
   return Math.min(Math.max(x, a), b);
 }
 
-export { camera, move };
+function applyQuaternion(vec, quat) {
+  const x = vec.x,
+    y = vec.y,
+    z = vec.z;
+  const qx = quat.x,
+    qy = quat.y,
+    qz = quat.z,
+    qw = quat.w;
+
+  // calculate quat * vec
+  const ix = qw * x + qy * z - qz * y;
+  const iy = qw * y + qz * x - qx * z;
+  const iz = qw * z + qx * y - qy * x;
+  const iw = -qx * x - qy * y - qz * z;
+
+  // calculate result * inverse quat
+  vec.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
+  vec.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
+  vec.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+
+  return vec;
+}
+
+export { move, cameraBody };

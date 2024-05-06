@@ -52,7 +52,11 @@ export function newObject(type) {
 
     return { cannonBody, threeMesh };
   } else if (type === "Plane") {
-    cannonBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
+    cannonBody = new CANNON.Body({
+      mass: 0,
+      shape: new CANNON.Plane(),
+      type: CANNON.Body.STATIC,
+    });
     cannonBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0); // make it face up
     cannonBody.position.set(0, 0, 0); // Place it at the bottom of the world
 
