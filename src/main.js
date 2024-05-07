@@ -221,10 +221,13 @@ document.addEventListener("keydown", (e) => {
       if (flyingBool) {
         cameraBody.mass = 0;
         cameraBody.collisionFilterGroup = 0;
-        //cameraBody.velocity = cameraBody.velocity.set(new);
+        world.gravity.set(0, 0, 0);
+        cameraBody.velocity = cameraBody.velocity.set(0, 0, 0);
       } else {
         cameraBody.mass = 1;
         cameraBody.collisionFilterGroup = 1;
+        world.gravity.set(0, -9.82, 0);
+        cameraBody.position.y = 8;
       }
     }
   }
@@ -242,65 +245,80 @@ document.addEventListener("keyup", (e) => {
 function move() {
   let speed = 100;
   let movement;
-  if (forwardBool) {
-    movement = new CANNON.Vec3(0, 0, -speed);
-    //movement.scale(speed, movement);
-    movement = applyQuaternion(movement, qx);
+  if (!flyingBool) {
+    if (forwardBool) {
+      movement = new CANNON.Vec3(0, 0, -speed);
+      movement = applyQuaternion(movement, qx);
 
-    //forwardMovement.vmul(speed000);
+      cameraBody.velocity = cameraBody.velocity.vadd(movement);
+      //console.log(cameraBody);
+      //cameraBody.position += forwardMovement;
+    }
+    if (backwardBool) {
+      let movement = new CANNON.Vec3(0, 0, speed);
+      movement = applyQuaternion(movement, qx);
 
-    //cameraBody.position = cameraBody.position.vadd(forwardMovement);
+      cameraBody.velocity = cameraBody.velocity.vadd(movement);
+      //cameraBody.position = cameraBody.position.vadd(backwardMovement);
+      //cameraBody.position += backwardMovement;
+    }
+    if (leftBool) {
+      let movement = new CANNON.Vec3(-speed, 0, 0);
+      //movement.scale(speed, movement);
+      movement = applyQuaternion(movement, qx);
+      cameraBody.velocity = cameraBody.velocity.vadd(movement);
+    }
+    if (rightBool) {
+      let movement = new CANNON.Vec3(speed, 0, 0);
+      //movement.scale(speed, movement);
+      movement = applyQuaternion(movement, qx);
 
-    cameraBody.velocity = cameraBody.velocity.vadd(movement);
-    //console.log(cameraBody);
-    //cameraBody.position += forwardMovement;
-  }
-  if (backwardBool) {
-    let movement = new CANNON.Vec3(0, 0, speed);
-    //movement.scale(speed, movement);
-    movement = applyQuaternion(movement, qx);
+      cameraBody.velocity = cameraBody.velocity.vadd(movement);
+      //cameraBody.position = cameraBody.position.vadd(rightMovement);
+      //cameraBody.position += rightMovement;
+    }
+  } else {
+    if (forwardBool) {
+      movement = new CANNON.Vec3(0, 0, -1);
+      movement = applyQuaternion(movement, qx);
 
-    cameraBody.velocity = cameraBody.velocity.vadd(movement);
-    //cameraBody.position = cameraBody.position.vadd(backwardMovement);
-    //cameraBody.position += backwardMovement;
-  }
-  if (leftBool) {
-    let movement = new CANNON.Vec3(-speed, 0, 0);
-    //movement.scale(speed, movement);
-    movement = applyQuaternion(movement, qx);
-    cameraBody.velocity = cameraBody.velocity.vadd(movement);
-    /*
-    
-      movement.x * speed,
-      movement.y * speed,
-      movement.z * speed
-    );*/
-    //cameraBody.position = cameraBody.position.vadd(leftMovement);
-    //cameraBody.position += leftMovement;
-  }
-  if (rightBool) {
-    let movement = new CANNON.Vec3(speed, 0, 0);
-    //movement.scale(speed, movement);
-    movement = applyQuaternion(movement, qx);
+      cameraBody.position = cameraBody.position.vadd(movement);
+    }
+    if (backwardBool) {
+      let movement = new CANNON.Vec3(0, 0, 1);
+      movement = applyQuaternion(movement, qx);
 
-    cameraBody.velocity = cameraBody.velocity.vadd(movement);
-    //cameraBody.position = cameraBody.position.vadd(rightMovement);
-    //cameraBody.position += rightMovement;
-  }
-  if (upBool) {
-    let movement = new CANNON.Vec3(0, 1, 0);
-    //movement.scale(speed, movement);
-    movement = applyQuaternion(movement, qx);
-    cameraBody.position = cameraBody.position.vadd(movement);
-    //cameraBody.velocity = cameraBody.velocity.vadd(movement);
-  }
-  if (downBool) {
-    let movement = new CANNON.Vec3(0, -1, 0);
-    //movement.scale(speed, movement);
-    movement = applyQuaternion(movement, qx);
-    cameraBody.position = cameraBody.position.vadd(movement);
+      cameraBody.position = cameraBody.position.vadd(movement);
+    }
+    if (leftBool) {
+      let movement = new CANNON.Vec3(-1, 0, 0);
+      //movement.scale(speed, movement);
+      movement = applyQuaternion(movement, qx);
+      cameraBody.position = cameraBody.position.vadd(movement);
+    }
+    if (rightBool) {
+      let movement = new CANNON.Vec3(1, 0, 0);
+      //movement.scale(speed, movement);
+      movement = applyQuaternion(movement, qx);
 
-    //cameraBody.velocity = cameraBody.velocity.vadd(movement);
+      cameraBody.position = cameraBody.position.vadd(movement);
+    }
+
+    if (upBool) {
+      let movement = new CANNON.Vec3(0, 1, 0);
+      //movement.scale(speed, movement);
+      movement = applyQuaternion(movement, qx);
+      cameraBody.position = cameraBody.position.vadd(movement);
+      //cameraBody.velocity = cameraBody.velocity.vadd(movement);
+    }
+    if (downBool) {
+      let movement = new CANNON.Vec3(0, -1, 0);
+      //movement.scale(speed, movement);
+      movement = applyQuaternion(movement, qx);
+      cameraBody.position = cameraBody.position.vadd(movement);
+
+      //cameraBody.velocity = cameraBody.velocity.vadd(movement);
+    }
   }
   if (cameraBody.velocity.length() > 20) {
     cameraBody.velocity.normalize();

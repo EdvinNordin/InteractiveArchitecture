@@ -119,19 +119,21 @@ function move() {
     cameraBody.position = cameraBody.position.vadd(rightMovement);
     //cameraBody.position += rightMovement;
   }
-  if (upBool) {
-    let upMovement = new CANNON.Vec3(0, 1, 0);
-    upMovement = applyQuaternion(upMovement, qx);
-    upMovement.scale(speed);
+  if (flyingBool) {
+    if (upBool) {
+      let upMovement = new CANNON.Vec3(0, 1, 0);
+      upMovement = applyQuaternion(upMovement, qx);
+      upMovement.scale(speed);
 
-    cameraBody.position = cameraBody.position.vadd(upMovement);
-  }
-  if (downBool) {
-    let downMovement = new CANNON.Vec3(0, -1, 0);
-    downMovement = applyQuaternion(downMovement, qx);
-    downMovement.scale(speed);
+      cameraBody.position = cameraBody.position.vadd(upMovement);
+    }
+    if (downBool) {
+      let downMovement = new CANNON.Vec3(0, -1, 0);
+      downMovement = applyQuaternion(downMovement, qx);
+      downMovement.scale(speed);
 
-    cameraBody.position = cameraBody.position.vadd(downMovement);
+      cameraBody.position = cameraBody.position.vadd(downMovement);
+    }
   }
 }
 
