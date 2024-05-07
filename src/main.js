@@ -6,7 +6,7 @@ import { camera, scene, renderer, world, composer } from "./Setup.js";
 import * as createObject from "./Objects.js";
 //import { move, cameraBody } from "./Inputs.js";
 
-import { ConvexHull } from "three/addons/math/ConvexHull.js";
+//import { ConvexHull } from "three/addons/math/ConvexHull.js";
 import { Rhino3dmLoader } from "../node_modules/three/examples/jsm/loaders/3DMLoader.js";
 
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
@@ -54,7 +54,7 @@ loader.load(
     box.getCenter(center);
     object.position.sub(center); // center the model
     object.position.y = 0; //center.y / 2;
-    object.traverse(function (child) {
+    /*object.traverse(function (child) {
       //var childCH = new ConvexHull().setFromObject(child);
       //childCH.compute();
       var childBox = new THREE.Box3().setFromObject(child, true);
@@ -69,12 +69,20 @@ loader.load(
         position: test,
       });
       //world.addBody(childBody);
-    });
+    });*/
+    //var jek = new ConvexHull().setFromObject(object);
+    var hej = new CANNON.Vec3();
+    var pos = new CANNON.Vec3();
+    pos.copy(object.position);
+    hej.copy(box.getSize(new THREE.Vector3()));
+    console.log(box.getSize(new THREE.Vector3()));
     var objectBody = new CANNON.Body({
       type: CANNON.Body.STATIC,
       mass: 0,
-      shape: new CANNON.Box(box.getSize(new THREE.Vector3())),
+      shape: new CANNON.Box(hej),
+      position: pos,
     });
+    console.log(hej);
     objectBody.position.z = -100;
     world.addBody(objectBody);
     scene.add(object);
@@ -93,9 +101,17 @@ loader.load(
 
 const cannonDebugger = new CannonDebugger(scene, world);
 
+var cameraRaiser = new CANNON.Body({
+  mass: 0,
+  shape: new CANNON.Plane(),
+  position: new CANNON.Vec3(0, 7.5, 0),
+});
+cameraRaiser.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+world.addBody(cameraRaiser);
+
 const testBody = createObject.newObject("Sphere").cannonBody;
 world.addBody(testBody);
-
+var flying = new CANNON.Vec3(0, 9.82, 0);
 // Start the simulation loop
 function animate() {
   //loops the animate function
@@ -108,6 +124,8 @@ function animate() {
   move();
   // Copy phyics pos and rot to renderer
   //console.log(testBody.velocity);
+
+  //cameraBody.force = cameraBody.force.vadd(flying);
   camera.position.copy(cameraBody.position);
   camera.quaternion.copy(cameraBody.quaternion);
   cannonToThree();
@@ -135,7 +153,8 @@ let forwardBool,
   leftBool,
   rightBool,
   upBool,
-  downBool = false;
+  downBool,
+  flyingBool = false;
 
 const instructions = document.getElementById("instructions");
 
@@ -146,7 +165,7 @@ let qx = new CANNON.Quaternion();
 
 let cameraBody = new CANNON.Body({
   mass: 1,
-  shape: new CANNON.Sphere(1),
+  shape: new CANNON.Sphere(0.001),
   position: new CANNON.Vec3(0, 8, 100),
 });
 cameraBody.angularDamping = 1;
@@ -197,6 +216,17 @@ document.addEventListener("keydown", (e) => {
     if (e.keyCode == 68) rightBool = true;
     if (e.keyCode == 32) upBool = true;
     if (e.keyCode == 16) downBool = true;
+    if (e.keyCode == 70) {
+      flyingBool = !flyingBool;
+      if (flyingBool) {
+        cameraBody.mass = 0;
+        cameraBody.collisionFilterGroup = 0;
+        //cameraBody.velocity = cameraBody.velocity.set(new);
+      } else {
+        cameraBody.mass = 1;
+        cameraBody.collisionFilterGroup = 1;
+      }
+    }
   }
 });
 
@@ -222,7 +252,6 @@ function move() {
     //cameraBody.position = cameraBody.position.vadd(forwardMovement);
 
     cameraBody.velocity = cameraBody.velocity.vadd(movement);
-    console.log(cameraBody.velocity);
     //console.log(cameraBody);
     //cameraBody.position += forwardMovement;
   }
@@ -259,18 +288,19 @@ function move() {
     //cameraBody.position += rightMovement;
   }
   if (upBool) {
-    let movement = new CANNON.Vec3(0, speed, 0);
+    let movement = new CANNON.Vec3(0, 1, 0);
     //movement.scale(speed, movement);
     movement = applyQuaternion(movement, qx);
-
-    cameraBody.velocity = cameraBody.velocity.vadd(movement);
+    cameraBody.position = cameraBody.position.vadd(movement);
+    //cameraBody.velocity = cameraBody.velocity.vadd(movement);
   }
   if (downBool) {
-    let movement = new CANNON.Vec3(0, -speed, 0);
+    let movement = new CANNON.Vec3(0, -1, 0);
     //movement.scale(speed, movement);
     movement = applyQuaternion(movement, qx);
+    cameraBody.position = cameraBody.position.vadd(movement);
 
-    cameraBody.velocity = cameraBody.velocity.vadd(movement);
+    //cameraBody.velocity = cameraBody.velocity.vadd(movement);
   }
   if (cameraBody.velocity.length() > 20) {
     cameraBody.velocity.normalize();
