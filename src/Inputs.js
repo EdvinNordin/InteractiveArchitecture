@@ -17,14 +17,14 @@ let theta_ = 0;
 
 let qx = new CANNON.Quaternion();
 
-let cameraBody = new CANNON.Body({
-  mass: 0,
+/*let cameraBody = new CANNON.Body({
+  mass: 1,
   shape: new CANNON.Box(new CANNON.Vec3(1, 1, 1)),
   position: new CANNON.Vec3(0, 1, 100),
 });
 cameraBody.angularDamping = 1;
 cameraBody.linearDamping = 1;
-world.addBody(cameraBody);
+world.addBody(cameraBody);*/
 
 document.addEventListener("mousemove", (e) => {
   if (document.pointerLockElement === document.body) {
@@ -164,4 +164,4 @@ function applyQuaternion(vec, quat) {
   return vec;
 }
 
-export { move, cameraBody };
+export { move };

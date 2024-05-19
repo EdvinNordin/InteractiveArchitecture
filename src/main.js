@@ -6,24 +6,21 @@ import { camera, scene, renderer, world, composer } from "./Setup.js";
 import * as createObject from "./Objects.js";
 //import { move, cameraBody } from "./Inputs.js";
 
-//import { ConvexHull } from "three/addons/math/ConvexHull.js";
 import { Rhino3dmLoader } from "../node_modules/three/examples/jsm/loaders/3DMLoader.js";
 
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
-let wow;
+
+let cameraBody = new CANNON.Body({
+  mass: 1,
+  shape: new CANNON.Sphere(1.5),
+  position: new CANNON.Vec3(0, 1, 50),
+});
+
 // Created objects
 let sphereMesh = createObject.newObject("Sphere").threeMesh;
 let sphereBody = createObject.newObject("Sphere").cannonBody;
-scene.add(sphereMesh);
-world.addBody(sphereBody);
-
-/*
-document.addEventListener("keydown", (e) => {
-  if (e.code === "KeyF") {
-    console.log("F");
-    sphereBody.force.set(0, 0, -50);
-  }
-});*/
+//scene.add(sphereMesh);
+//world.addBody(sphereBody);
 
 let planeMesh = createObject.newObject("Plane").threeMesh;
 let planeBody = createObject.newObject("Plane").cannonBody;
@@ -45,47 +42,36 @@ const loader = new Rhino3dmLoader();
 
 loader.setLibraryPath("https://cdn.jsdelivr.net/npm/rhino3dm@8.4.0/");
 loader.load(
-  "assets/baken_grey_texture.3dm",
+  "assets/safe_space.3dm",
   function (object) {
-    object.scale.set(0.01, 0.01, 0.01);
+    object.up = new THREE.Vector3(0, 1, 0);
     object.rotation.x = -Math.PI / 2; // rotate the model
-    var box = new THREE.Box3().setFromObject(object, false);
-    var center = new THREE.Vector3();
-    box.getCenter(center);
-    object.position.sub(center); // center the model
-    object.position.y = 0; //center.y / 2;
-    /*object.traverse(function (child) {
-      //var childCH = new ConvexHull().setFromObject(child);
-      //childCH.compute();
-      var childBox = new THREE.Box3().setFromObject(child, true);
-      var boxSize = childBox.getSize(new THREE.Vector3());
-      var test = new CANNON.Vec3();
-      test.copy(childBox.getCenter(new THREE.Vector3()));
-
-      var childBody = new CANNON.Body({
-        type: CANNON.Body.STATIC,
-        mass: 0,
-        shape: new CANNON.Box(boxSize),
-        position: test,
-      });
-      //world.addBody(childBody);
-    });*/
-    //var jek = new ConvexHull().setFromObject(object);
-    var hej = new CANNON.Vec3();
-    var pos = new CANNON.Vec3();
-    pos.copy(object.position);
-    hej.copy(box.getSize(new THREE.Vector3()));
-    console.log(box.getSize(new THREE.Vector3()));
-    var objectBody = new CANNON.Body({
-      type: CANNON.Body.STATIC,
-      mass: 0,
-      shape: new CANNON.Box(hej),
-      position: pos,
-    });
-    console.log(hej);
-    objectBody.position.z = -100;
-    world.addBody(objectBody);
     scene.add(object);
+    //console.log(object);
+    //object.scale.set(0.01, 0.01, 0.01);
+
+    let box = new THREE.Box3().setFromObject(object, false);
+    let center = new THREE.Vector3();
+    box.getCenter(center);
+
+    object.traverse((child) => {
+      if (child.isMesh) {
+        let verts = child.geometry.attributes.position.array;
+        for (let i = 0; i < verts.length; i++) {
+          verts[i] = verts[i] * 0.01;
+        }
+        let indis = child.geometry.index.array;
+
+        let trimeshShape = new CANNON.Trimesh(verts, indis);
+        let trimeshBody = new CANNON.Body({ mass: 0 });
+        let rot = new CANNON.Quaternion();
+        rot.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+        trimeshBody.quaternion = rot;
+        trimeshBody.addShape(trimeshShape);
+
+        world.addBody(trimeshBody);
+      }
+    });
   },
   function (progress) {
     //console.log((progress.loaded / progress.total) * speed0 + "%");
@@ -95,41 +81,22 @@ loader.load(
   }
 );
 
-/*cameraBody.addEventListener("collide", (event) => {
-  console.log(event);
-});*/
-
 const cannonDebugger = new CannonDebugger(scene, world);
-
-var cameraRaiser = new CANNON.Body({
-  mass: 0,
-  shape: new CANNON.Plane(),
-  position: new CANNON.Vec3(0, 7.5, 0),
-});
-cameraRaiser.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
-world.addBody(cameraRaiser);
-
-const testBody = createObject.newObject("Sphere").cannonBody;
-world.addBody(testBody);
-var flying = new CANNON.Vec3(0, 9.82, 0);
+let raiser = new CANNON.Vec3(0, 7.5, 0);
+let test = new THREE.Vector3();
 // Start the simulation loop
 function animate() {
   //loops the animate function
   requestAnimationFrame(animate);
   // Step the physics world
   world.fixedStep();
-
-  //console.log(cameraBody.velocity);
   // Move the camera
   move();
-  // Copy phyics pos and rot to renderer
-  //console.log(testBody.velocity);
 
-  //cameraBody.force = cameraBody.force.vadd(flying);
-  camera.position.copy(cameraBody.position);
+  camera.position.copy(cameraBody.position.vadd(raiser));
   camera.quaternion.copy(cameraBody.quaternion);
   cannonToThree();
-  cannonDebugger.update();
+  //cannonDebugger.update();
   // Render three.js
   renderer.render(scene, camera);
 
@@ -163,11 +130,6 @@ let theta_ = 0;
 
 let qx = new CANNON.Quaternion();
 
-let cameraBody = new CANNON.Body({
-  mass: 1,
-  shape: new CANNON.Sphere(0.001),
-  position: new CANNON.Vec3(0, 8, 100),
-});
 cameraBody.angularDamping = 1;
 cameraBody.linearDamping = 0.5;
 
