@@ -13,7 +13,7 @@ let sky, sun, composer, renderPass, saoPass;
 
 const scene = new THREE.Scene();
 
-const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
+const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -98.2, 0) });
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.shadowMap.enabled = true;
@@ -41,11 +41,14 @@ scene.add(dirLight);
 //const helper = new THREE.DirectionalLightHelper(dirLight, 1);
 //scene.add(helper);
 
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.1);
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.2);
 hemiLight.color.setHSL(0.6, 1, 0.6);
-hemiLight.groundColor.setHSL(0.095, 1, 0.75);
-hemiLight.position.set(0, 50, 0);
+hemiLight.groundColor.setHSL(0.095, 1, 0.85);
+//hemiLight.groundColor.setRGB(0.85, 0.85, 0.71);
 scene.add(hemiLight);
+
+let ambientLight = new THREE.AmbientLight(0x404040);
+//scene.add(ambientLight);
 
 window.addEventListener("resize", onWindowResize);
 

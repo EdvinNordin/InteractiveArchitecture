@@ -11,8 +11,8 @@ const cannonDebugger = new CannonDebugger(scene, world);
 
 let cameraBody = new CANNON.Body({
   mass: 1,
-  shape: new CANNON.Sphere(1.5),
-  position: new CANNON.Vec3(0, 1.5, 50),
+  shape: new CANNON.Sphere(2.5),
+  position: new CANNON.Vec3(0, 2.5, 150),
 });
 cameraBody.angularDamping = 1;
 cameraBody.linearDamping = 0.5;
@@ -35,7 +35,7 @@ world.addBody(planeBody);
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath("https://cdn.jsdelivr.net/npm/rhino3dm@8.4.0/");
 loader.load(
-  "assets/safe_space.3dm",
+  "assets/baken_mesh_color-var1.3dm",
   function (object) {
     object.rotation.x = -Math.PI / 2; // rotate the model
 
@@ -47,10 +47,14 @@ loader.load(
     let mat;
     object.traverse((child) => {
       if (child.isMesh) {
+        /*if (child.material.name === "/Concrete Simple D02 200cm (1)") {
+          mat = child.material;
+        }*/
+        child.material.metalness = 0;
+
         child.material.side = 0;
         child.recieveShadow = true;
         child.castShadow = true;
-        //if (child.material.name === "Paint (4)") child.material.side = 0;
         let verts = child.geometry.attributes.position.array;
         for (let i = 0; i < verts.length; i++) {
           verts[i] = verts[i] * 0.01;
@@ -70,7 +74,7 @@ loader.load(
     });
   },
   function (progress) {
-    //console.log((progress.loaded / progress.total) * speed0 + "%");
+    //console.log((progress.loaded / progress.total) * 100 + "%");
   },
   function (error) {
     console.log(error);
@@ -156,7 +160,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 function move() {
-  let speed = 100;
+  let speed = 70;
   let movement;
   if (!flyingBool) {
     if (forwardBool) {
@@ -212,9 +216,9 @@ function move() {
       cameraBody.position = cameraBody.position.vadd(movement);
     }
   }
-  if (cameraBody.velocity.length() > 20) {
+  if (cameraBody.velocity.length() > speed) {
     cameraBody.velocity.normalize();
-    cameraBody.velocity.scale(20, cameraBody.velocity);
+    cameraBody.velocity.scale(speed, cameraBody.velocity);
   }
 }
 
@@ -256,7 +260,8 @@ function cannonToThree() {
   //sphereMesh.quaternion.copy(sphereBody.quaternion);
   //scene.children.forEach((child) => {});
 }
-
+let pushDown = new CANNON.Vec3(0, -50, 0);
+let prevYPos = 1.5;
 animate();
 function animate() {
   //loops the animate function
@@ -267,6 +272,11 @@ function animate() {
 
   // Move the camera
   move();
+  let yPosDiff = cameraBody.position.y - prevYPos;
+  if (yPosDiff < -0.1) {
+    cameraBody.velocity = cameraBody.velocity.vadd(pushDown);
+  }
+  prevYPos = cameraBody.position.y;
 
   cannonToThree();
   //cannonDebugger.update();
