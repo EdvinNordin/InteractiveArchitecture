@@ -13,7 +13,9 @@ let sky, sun, composer, renderPass, saoPass;
 
 const scene = new THREE.Scene();
 
-const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -98.2, 0) });
+const world = new CANNON.World({
+  gravity: new CANNON.Vec3(0, -300, 0),
+});
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.shadowMap.enabled = true;

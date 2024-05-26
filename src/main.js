@@ -9,15 +9,48 @@ import { Rhino3dmLoader } from "../node_modules/three/examples/jsm/loaders/3DMLo
 
 const cannonDebugger = new CannonDebugger(scene, world);
 
+let playerMaterial = new CANNON.Material("playerMaterial");
+let wallMaterial = new CANNON.Material("wallMaterial");
+let groundMaterial = new CANNON.Material("groundMaterial");
+let stairsMaterial = new CANNON.Material("stairsMaterial");
+let playerGroundContact = new CANNON.ContactMaterial(
+  playerMaterial,
+  groundMaterial,
+  {
+    friction: 1,
+    restitution: 0,
+  }
+);
+let playerStairsContact = new CANNON.ContactMaterial(
+  playerMaterial,
+  stairsMaterial,
+  {
+    friction: 1,
+    restitution: 0,
+  }
+);
+let playerWallContact = new CANNON.ContactMaterial(
+  playerMaterial,
+  wallMaterial,
+  {
+    friction: 0,
+    restitution: 0,
+  }
+);
+world.addContactMaterial(playerStairsContact);
+world.addContactMaterial(playerGroundContact);
+world.addContactMaterial(playerWallContact);
+
 let cameraBody = new CANNON.Body({
   mass: 1,
-  shape: new CANNON.Sphere(2.5),
-  position: new CANNON.Vec3(0, 2.5, 150),
+  shape: new CANNON.Sphere(3),
+  position: new CANNON.Vec3(0, 3, 150),
+  material: playerMaterial,
 });
-cameraBody.angularDamping = 1;
-cameraBody.linearDamping = 0.5;
+cameraBody.angularDamping = 0.99;
+cameraBody.linearDamping = 0.99;
 world.addBody(cameraBody);
-let raiser = new CANNON.Vec3(0, 7.5, 0);
+let raiser = new CANNON.Vec3(0, 14, 0);
 
 let planeMesh = createObject.newObject("Plane").threeMesh;
 let planeBody = createObject.newObject("Plane").cannonBody;
@@ -29,8 +62,19 @@ planeMesh.material = new THREE.MeshStandardMaterial({
   map: texture,
   side: THREE.DoubleSide,
 });
+planeBody.material = groundMaterial;
 scene.add(planeMesh);
 world.addBody(planeBody);
+
+/*
+cameraBody.addEventListener("collideExit", function (e) {
+  if (e.body.material.name == "stairsMaterial") {
+    console.log("collided with wall");
+
+    world.gravity.set(0, -900.82, 0);
+  }
+});
+*/
 
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath("https://cdn.jsdelivr.net/npm/rhino3dm@8.4.0/");
@@ -40,18 +84,16 @@ loader.load(
     object.rotation.x = -Math.PI / 2; // rotate the model
 
     scene.add(object);
-
+    let mat;
     let box = new THREE.Box3().setFromObject(object, false);
     let center = new THREE.Vector3();
     box.getCenter(center);
-    let mat;
     object.traverse((child) => {
       if (child.isMesh) {
-        /*if (child.material.name === "/Concrete Simple D02 200cm (1)") {
-          mat = child.material;
-        }*/
+        if (child.material.name == "Paint") {
+          child.material.color.r = 1;
+        }
         child.material.metalness = 0;
-
         child.material.side = 0;
         child.recieveShadow = true;
         child.castShadow = true;
@@ -63,11 +105,18 @@ loader.load(
 
         let trimeshShape = new CANNON.Trimesh(verts, indis);
         let trimeshBody = new CANNON.Body({ mass: 0 });
+        if (child.material.name == "Paint") {
+          trimeshBody.material = stairsMaterial;
+        } else {
+          trimeshBody.material = wallMaterial;
+        }
+        trimeshBody.collisionResponse = true;
         trimeshBody.addShape(trimeshShape);
 
         let rot = new CANNON.Quaternion();
         rot.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
         trimeshBody.quaternion = rot;
+        console.log(mat);
 
         world.addBody(trimeshBody);
       }
@@ -105,7 +154,8 @@ document.addEventListener("mousemove", (e) => {
     let q = new CANNON.Quaternion(0, 0, 0, 0);
     q = qx.mult(qz);
 
-    cameraBody.quaternion.copy(q);
+    //cameraBody.quaternion.copy(qx);
+    camera.quaternion.copy(q);
   }
 });
 
@@ -124,13 +174,14 @@ let forwardBool,
   rightBool,
   upBool,
   downBool,
-  flyingBool = false;
+  flyingBool,
+  canJump = false;
 document.addEventListener("keydown", (e) => {
   if (document.pointerLockElement === document.body) {
-    if (e.keyCode == 87) forwardBool = true;
-    if (e.keyCode == 83) backwardBool = true;
-    if (e.keyCode == 65) leftBool = true;
-    if (e.keyCode == 68) rightBool = true;
+    if (e.keyCode == 87 || e.keyCode == 38) forwardBool = true;
+    if (e.keyCode == 83 || e.keyCode == 40) backwardBool = true;
+    if (e.keyCode == 65 || e.keyCode == 37) leftBool = true;
+    if (e.keyCode == 68 || e.keyCode == 39) rightBool = true;
     if (e.keyCode == 32) upBool = true;
     if (e.keyCode == 16) downBool = true;
     if (e.keyCode == 70) {
@@ -138,50 +189,88 @@ document.addEventListener("keydown", (e) => {
       if (flyingBool) {
         cameraBody.mass = 0;
         cameraBody.collisionFilterGroup = 0;
-        world.gravity.set(0, 0, 0);
-        cameraBody.velocity = cameraBody.velocity.set(0, 0, 0);
+        //world.gravity.set(0, 0, 0);
+        cameraBody.velocity = new CANNON.Vec3(0, 0, 0);
       } else {
         cameraBody.mass = 1;
         cameraBody.collisionFilterGroup = 1;
-        world.gravity.set(0, -9.82, 0);
-        cameraBody.position.y = 1.5;
+        //world.gravity.set(0, -9.82, 0);
+        //cameraBody.position.y = 1.5;
       }
     }
   }
 });
 
 document.addEventListener("keyup", (e) => {
-  if (e.keyCode == 87) forwardBool = false;
-  if (e.keyCode == 83) backwardBool = false;
-  if (e.keyCode == 65) leftBool = false;
-  if (e.keyCode == 68) rightBool = false;
+  if (e.keyCode == 87 || e.keyCode == 38) forwardBool = false;
+  if (e.keyCode == 83 || e.keyCode == 40) backwardBool = false;
+  if (e.keyCode == 65 || e.keyCode == 37) leftBool = false;
+  if (e.keyCode == 68 || e.keyCode == 39) rightBool = false;
   if (e.keyCode == 32) upBool = false;
   if (e.keyCode == 16) downBool = false;
 });
 
+const contactNormal = new CANNON.Vec3(); // Normal in the contact, pointing *out* of whatever the player touched
+const upAxis = new CANNON.Vec3(0, 1, 0);
+cameraBody.addEventListener("collide", function (e) {
+  const { contact } = e;
+  console.log(contact);
+
+  //cameraBody.angularDamping = 0.1;
+  //cameraBody.linearDamping = 0.1;
+
+  // contact.bi and contact.bj are the colliding bodies, and contact.ni is the collision normal.
+  // We do not yet know which one is which! Let's check.
+  if (contact.bi.id === cameraBody.id) {
+    // bi is the player body, flip the contact normal
+    contact.ni.negate(contactNormal);
+  } else {
+    // bi is something else. Keep the normal as it is
+    contactNormal.copy(contact.ni);
+  }
+
+  // If contactNormal.dot(upAxis) is between 0 and 1, we know that the contact normal is somewhat in the up direction.
+  if (contactNormal.dot(upAxis) > 0.5) {
+    // Use a "good" threshold value between 0 and 1 here!
+    canJump = true;
+  }
+});
+
 function move() {
-  let speed = 70;
+  let speed = 500;
   let movement;
   if (!flyingBool) {
     if (forwardBool) {
-      movement = new CANNON.Vec3(0, 0, -speed);
+      movement = new CANNON.Vec3(-speed, 0, 0);
       movement = applyQuaternion(movement, qx);
-      cameraBody.velocity = cameraBody.velocity.vadd(movement);
+      //cameraBody.velocity = cameraBody.velocity.vadd(movement);
+      cameraBody.applyTorque(movement);
     }
     if (backwardBool) {
-      let movement = new CANNON.Vec3(0, 0, speed);
+      movement = new CANNON.Vec3(speed, 0, 0);
       movement = applyQuaternion(movement, qx);
-      cameraBody.velocity = cameraBody.velocity.vadd(movement);
+      //cameraBody.velocity = cameraBody.velocity.vadd(movement);
+      cameraBody.applyTorque(movement);
     }
     if (leftBool) {
-      let movement = new CANNON.Vec3(-speed, 0, 0);
+      movement = new CANNON.Vec3(0, 0, speed);
       movement = applyQuaternion(movement, qx);
-      cameraBody.velocity = cameraBody.velocity.vadd(movement);
+      //cameraBody.velocity = cameraBody.velocity.vadd(movement);
+      cameraBody.applyTorque(movement);
     }
     if (rightBool) {
-      let movement = new CANNON.Vec3(speed, 0, 0);
+      movement = new CANNON.Vec3(0, 0, -speed);
       movement = applyQuaternion(movement, qx);
-      cameraBody.velocity = cameraBody.velocity.vadd(movement);
+      //cameraBody.velocity = cameraBody.velocity.vadd(movement);
+      cameraBody.applyTorque(movement);
+    }
+    if (upBool && canJump) {
+      canJump = false;
+      movement = new CANNON.Vec3(0, 5000, 0);
+      //movement = applyQuaternion(movement, qx);
+      //cameraBody.velocity = cameraBody.velocity.vadd(movement);
+      cameraBody.linearDamping = 0.49;
+      cameraBody.applyForce(movement);
     }
   } else {
     if (forwardBool) {
@@ -190,36 +279,36 @@ function move() {
       cameraBody.position = cameraBody.position.vadd(movement);
     }
     if (backwardBool) {
-      let movement = new CANNON.Vec3(0, 0, 1);
+      movement = new CANNON.Vec3(0, 0, 1);
       movement = applyQuaternion(movement, qx);
       cameraBody.position = cameraBody.position.vadd(movement);
     }
     if (leftBool) {
-      let movement = new CANNON.Vec3(-1, 0, 0);
+      movement = new CANNON.Vec3(-1, 0, 0);
       movement = applyQuaternion(movement, qx);
       cameraBody.position = cameraBody.position.vadd(movement);
     }
     if (rightBool) {
-      let movement = new CANNON.Vec3(1, 0, 0);
+      movement = new CANNON.Vec3(1, 0, 0);
       movement = applyQuaternion(movement, qx);
       cameraBody.position = cameraBody.position.vadd(movement);
     }
 
     if (upBool) {
-      let movement = new CANNON.Vec3(0, 1, 0);
+      movement = new CANNON.Vec3(0, 1, 0);
       movement = applyQuaternion(movement, qx);
       cameraBody.position = cameraBody.position.vadd(movement);
     }
     if (downBool) {
-      let movement = new CANNON.Vec3(0, -1, 0);
+      movement = new CANNON.Vec3(0, -1, 0);
       movement = applyQuaternion(movement, qx);
       cameraBody.position = cameraBody.position.vadd(movement);
     }
   }
-  if (cameraBody.velocity.length() > speed) {
+  /*if (cameraBody.velocity.length() > speed) {
     cameraBody.velocity.normalize();
     cameraBody.velocity.scale(speed, cameraBody.velocity);
-  }
+  }*/
 }
 
 function clamp(x, a, b) {
@@ -251,16 +340,10 @@ function applyQuaternion(vec, quat) {
 
 function cannonToThree() {
   camera.position.copy(cameraBody.position.vadd(raiser));
-  camera.quaternion.copy(cameraBody.quaternion);
-  //camera.position.copy(cameraBody.position);
   //camera.quaternion.copy(cameraBody.quaternion);
-  //console.log(cameraBody.quaternion);
-  // Pos then rot
-  //sphereMesh.position.copy(sphereBody.position);
-  //sphereMesh.quaternion.copy(sphereBody.quaternion);
-  //scene.children.forEach((child) => {});
 }
-let pushDown = new CANNON.Vec3(0, -50, 0);
+camera;
+let pushDown = new CANNON.Vec3(0, -500, 0);
 let prevYPos = 1.5;
 animate();
 function animate() {
@@ -273,9 +356,10 @@ function animate() {
   // Move the camera
   move();
   let yPosDiff = cameraBody.position.y - prevYPos;
-  if (yPosDiff < -0.1) {
-    cameraBody.velocity = cameraBody.velocity.vadd(pushDown);
+  if (yPosDiff < -0.1 && !flyingBool) {
+    //cameraBody.velocity = cameraBody.velocity.vadd(pushDown);
   }
+  //world.gravity = pushDown;
   prevYPos = cameraBody.position.y;
 
   cannonToThree();
