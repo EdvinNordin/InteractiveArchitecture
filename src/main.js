@@ -43,14 +43,14 @@ world.addContactMaterial(playerWallContact);
 
 let cameraBody = new CANNON.Body({
   mass: 1,
-  shape: new CANNON.Sphere(3),
-  position: new CANNON.Vec3(0, 3, 150),
+  shape: new CANNON.Sphere(2.5),
+  position: new CANNON.Vec3(0, 2.5, 150),
   material: playerMaterial,
 });
-cameraBody.angularDamping = 0.99;
+cameraBody.angularDamping = 1;
 cameraBody.linearDamping = 0.99;
 world.addBody(cameraBody);
-let raiser = new CANNON.Vec3(0, 14, 0);
+let raiser = new CANNON.Vec3(0, 12, 0);
 
 let planeMesh = createObject.newObject("Plane").threeMesh;
 let planeBody = createObject.newObject("Plane").cannonBody;
@@ -237,7 +237,7 @@ cameraBody.addEventListener("collide", function (e) {
 });
 
 function move() {
-  let speed = 500;
+  let speed = 1000;
   let movement;
   if (!flyingBool) {
     if (forwardBool) {

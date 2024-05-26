@@ -3,7 +3,7 @@ const path = require("path");
 module.exports = {
   entry: "./src/main.js", // the entry point of your application
   output: {
-    filename: "bundle1.js", // the name of the bundled output file [contenthash].
+    filename: "bundle.js", // the name of the bundled output file [contenthash].
     path: path.resolve(__dirname, "dist"), // the output directory
   },
   module: {
