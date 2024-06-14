@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import CannonDebugger from "cannon-es-debugger";
+import Stats from "../node_modules/three/examples/jsm/libs/stats.module.js";
 
 import { camera, scene, renderer, world, composer } from "./Setup.js";
 import * as createObject from "./Objects.js";
@@ -8,6 +9,8 @@ import * as createObject from "./Objects.js";
 import { Rhino3dmLoader } from "../node_modules/three/examples/jsm/loaders/3DMLoader.js";
 
 const cannonDebugger = new CannonDebugger(scene, world);
+const stats = Stats();
+document.body.appendChild(stats.dom);
 
 let playerMaterial = new CANNON.Material("playerMaterial");
 let wallMaterial = new CANNON.Material("wallMaterial");
@@ -63,7 +66,7 @@ planeMesh.material = new THREE.MeshStandardMaterial({
   side: THREE.DoubleSide,
 });
 planeBody.material = groundMaterial;
-scene.add(planeMesh);
+//scene.add(planeMesh);
 world.addBody(planeBody);
 
 /*
@@ -75,13 +78,16 @@ cameraBody.addEventListener("collideExit", function (e) {
   }
 });
 */
-
+let scale = 0.01;
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath("https://cdn.jsdelivr.net/npm/rhino3dm@8.4.0/");
+
 loader.load(
-  "assets/baken_mesh_color-var1.3dm",
+  //"assets/baken_mesh_color-var1.3dm",
+  "assets/land.3dm",
   function (object) {
     object.rotation.x = -Math.PI / 2; // rotate the model
+    object.position.y = 46;
 
     scene.add(object);
     let mat;
@@ -90,16 +96,13 @@ loader.load(
     box.getCenter(center);
     object.traverse((child) => {
       if (child.isMesh) {
-        if (child.material.name == "Paint") {
-          child.material.color.r = 1;
-        }
         child.material.metalness = 0;
         child.material.side = 0;
         child.recieveShadow = true;
         child.castShadow = true;
         let verts = child.geometry.attributes.position.array;
         for (let i = 0; i < verts.length; i++) {
-          verts[i] = verts[i] * 0.01;
+          verts[i] = verts[i] * scale;
         }
         let indis = child.geometry.index.array;
 
@@ -116,11 +119,164 @@ loader.load(
         let rot = new CANNON.Quaternion();
         rot.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
         trimeshBody.quaternion = rot;
-        console.log(mat);
 
         world.addBody(trimeshBody);
       }
     });
+  },
+  function (progress) {
+    //console.log((progress.loaded / progress.total) * 100 + "%");
+  },
+  function (error) {
+    console.log(error);
+  }
+);
+
+loader.load(
+  "assets/baken_mesh_color-var1.3dm",
+  function (object) {
+    object.rotation.x = -Math.PI / 2; // rotate the model
+
+    scene.add(object);
+    let mat;
+    let box = new THREE.Box3().setFromObject(object, false);
+    let center = new THREE.Vector3();
+    box.getCenter(center);
+    object.traverse((child) => {
+      if (child.isMesh) {
+        child.material.metalness = 0;
+        child.material.side = 0;
+        child.recieveShadow = true;
+        child.castShadow = true;
+        let verts = child.geometry.attributes.position.array;
+        for (let i = 0; i < verts.length; i++) {
+          verts[i] = verts[i] * scale;
+        }
+        let indis = child.geometry.index.array;
+
+        let trimeshShape = new CANNON.Trimesh(verts, indis);
+        let trimeshBody = new CANNON.Body({ mass: 0 });
+        if (child.material.name == "Paint") {
+          trimeshBody.material = stairsMaterial;
+        } else {
+          trimeshBody.material = wallMaterial;
+        }
+        trimeshBody.collisionResponse = true;
+        trimeshBody.addShape(trimeshShape);
+
+        let rot = new CANNON.Quaternion();
+        rot.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+        trimeshBody.quaternion = rot;
+
+        world.addBody(trimeshBody);
+      }
+    });
+  },
+  function (progress) {
+    //console.log((progress.loaded / progress.total) * 100 + "%");
+  },
+  function (error) {
+    console.log(error);
+  }
+);
+
+loader.load(
+  "assets/net.3dm",
+  function (object) {
+    object.rotation.x = -Math.PI / 2; // rotate the model
+    object.position.x = 150;
+    var i = 0;
+    scene.add(object);
+    let box = new THREE.Box3().setFromObject(object, false);
+    let center = new THREE.Vector3();
+    box.getCenter(center);
+    object.traverse((child) => {
+      if (child.isMesh) {
+        i++;
+        child.material.metalness = 0;
+        child.material.side = 2;
+        child.recieveShadow = true;
+        child.castShadow = true;
+        let verts = child.geometry.attributes.position.array;
+        for (let i = 0; i < verts.length; i++) {
+          verts[i] = verts[i] * scale;
+        }
+        let indis = child.geometry.index.array;
+
+        let trimeshShape = new CANNON.Trimesh(verts, indis);
+        let trimeshBody = new CANNON.Body({ mass: 0 });
+        if (child.material.name == "Paint") {
+          trimeshBody.material = stairsMaterial;
+        } else {
+          trimeshBody.material = wallMaterial;
+        }
+        trimeshBody.collisionResponse = true;
+        trimeshBody.addShape(trimeshShape);
+
+        let rot = new CANNON.Quaternion();
+        rot.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+        trimeshBody.quaternion = rot;
+        trimeshBody.position = new CANNON.Vec3(150, 0, 0);
+        world.addBody(trimeshBody);
+      }
+    });
+    console.log(i);
+  },
+  function (progress) {
+    //console.log((progress.loaded / progress.total) * 100 + "%");
+  },
+  function (error) {
+    console.log(error);
+  }
+);
+
+loader.load(
+  "assets/byReduced.3dm",
+  function (object) {
+    object.rotation.x = -Math.PI / 2; // rotate the model
+    object.position.x = -200;
+    object.position.y = 0;
+    scene.add(object);
+    let box = new THREE.Box3().setFromObject(object, false);
+    let center = new THREE.Vector3();
+    box.getCenter(center);
+    let i = 0;
+    object.traverse((child) => {
+      if (child.isMesh) {
+        i++;
+        child.material.metalness = 0;
+        child.material.side = 0;
+        child.recieveShadow = true;
+        child.castShadow = true;
+        let verts = child.geometry.attributes.position.array;
+        for (let i = 0; i < verts.length; i++) {
+          verts[i] = verts[i] * scale;
+        }
+        let indis = child.geometry.index.array;
+        //console.log(verts.length);
+
+        let trimeshShape = new CANNON.Trimesh(verts, indis);
+        let trimeshBody = new CANNON.Body({ mass: 0 });
+        if (i < 1295) {
+          trimeshBody.material = wallMaterial;
+        } else {
+          trimeshBody.material = groundMaterial;
+        }
+        trimeshBody.collisionResponse = true;
+        trimeshBody.addShape(trimeshShape);
+
+        let rot = new CANNON.Quaternion();
+        rot.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+        trimeshBody.quaternion = rot;
+        trimeshBody.position = new CANNON.Vec3(-200, 0, 0);
+
+        //houses are upto 1295, gorundplane is 1493
+        if (i < 1295 || i == 1493) {
+          world.addBody(trimeshBody);
+        }
+      }
+    });
+    console.log(i);
   },
   function (progress) {
     //console.log((progress.loaded / progress.total) * 100 + "%");
@@ -214,7 +370,7 @@ const contactNormal = new CANNON.Vec3(); // Normal in the contact, pointing *out
 const upAxis = new CANNON.Vec3(0, 1, 0);
 cameraBody.addEventListener("collide", function (e) {
   const { contact } = e;
-  console.log(contact);
+  //console.log(contact);
 
   //cameraBody.angularDamping = 0.1;
   //cameraBody.linearDamping = 0.1;
@@ -369,5 +525,6 @@ function animate() {
   renderer.render(scene, camera);
 
   // Render the effect composer (post processing)
-  composer.render();
+  //composer.render();
+  stats.update();
 }

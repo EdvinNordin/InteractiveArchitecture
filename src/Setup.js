@@ -28,7 +28,7 @@ let camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   1,
-  1000
+  10000
 );
 camera.position.set(0, 8, 110);
 
@@ -98,19 +98,19 @@ function initSky() {
 function initSAO() {
   composer = new EffectComposer(renderer);
   renderPass = new RenderPass(scene, camera);
-  //composer.addPass(renderPass);
+  composer.addPass(renderPass);
   saoPass = new SAOPass(scene, camera);
-  //composer.addPass(saoPass);
+  composer.addPass(saoPass);
   const outputPass = new OutputPass();
-  //composer.addPass(outputPass);
+  composer.addPass(outputPass);
 
   saoPass.params.saoBias = 0.5;
-  saoPass.params.saoIntensity = 0.0012;
-  saoPass.params.saoScale = 0.3;
-  saoPass.params.saoKernelRadius = 40;
+  saoPass.params.saoIntensity = 0.18;
+  saoPass.params.saoScale = 5;
+  saoPass.params.saoKernelRadius = 100;
   saoPass.params.saoMinResolution = 0;
   saoPass.params.saoBlur = true;
-  saoPass.params.saoBlurRadius = 16;
+  saoPass.params.saoBlurRadius = 8;
   saoPass.params.saoBlurStdDev = 4;
   saoPass.params.saoBlurDepthCutoff = 0.01;
   saoPass.enabled = false;
