@@ -392,8 +392,8 @@ cameraBody.addEventListener("collide", function (e) {
   }
 });
 
-function move() {
-  let speed = 1000;
+function move(delta) {
+  let speed = 100000 * delta;
   let movement;
   if (!flyingBool) {
     if (forwardBool) {
@@ -501,16 +501,20 @@ function cannonToThree() {
 camera;
 let pushDown = new CANNON.Vec3(0, -500, 0);
 let prevYPos = 1.5;
+var clock = new THREE.Clock();
+var delta;
 animate();
 function animate() {
   //loops the animate function
   requestAnimationFrame(animate);
 
+  delta = clock.getDelta();
+  //console.log(delta);
   // Step the physics world
   world.fixedStep();
 
   // Move the camera
-  move();
+  move(delta);
   let yPosDiff = cameraBody.position.y - prevYPos;
   if (yPosDiff < -0.1 && !flyingBool) {
     //cameraBody.velocity = cameraBody.velocity.vadd(pushDown);
