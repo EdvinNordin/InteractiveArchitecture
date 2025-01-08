@@ -3,7 +3,7 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 
-const allowedOrigins = ["https://interactivearchitecture.onrender.com/", "http://localhost:5173"]; // For dev and production
+const allowedOrigins = ["https://interactivearchitecture.onrender.com", "http://localhost:5173"]; // For dev and production
 const io = require("socket.io")(server, {
     cors: {
         origin: allowedOrigins, // Accept an array of allowed origins
