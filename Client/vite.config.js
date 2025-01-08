@@ -1,4 +1,5 @@
 import {defineConfig} from "vite";
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import inject from '@rollup/plugin-inject'; // Plugin for polyfills
 
 export default defineConfig({
@@ -6,30 +7,16 @@ export default defineConfig({
     build: {
         outDir: "dist", // Default output directory (can be changed)
     },
-    plugins: [
-        // Use @rollup/plugin-inject to polyfill Buffer
-        inject({
-            Buffer: ['buffer', 'Buffer'], // Automatically replace 'Buffer' with the polyfill
-        }),
-    ],
     resolve: {
         alias: {
-            // Polyfill for other missing modules (if necessary)
-            stream: 'stream-browserify',
-            crypto: 'crypto-browserify',
-            path: 'path-browserify',
-        },
+            process: "process/browser",
+            stream: "stream-browserify",
+            zlib: "browserify-zlib",
+            util: 'util'
+        }
     },
-});
-/*
-import { defineConfig } from 'vite';
-import inject from '@rollup/plugin-inject'; // Plugin for polyfills
-
-export default defineConfig({
     plugins: [
-        // Use @rollup/plugin-inject to polyfill Buffer
-        inject({
-            Buffer: ['buffer', 'Buffer'], // Automatically replace 'Buffer' with the polyfill
-        }),
-    ],
-});*/
+        nodePolyfills()
+        ]
+
+});

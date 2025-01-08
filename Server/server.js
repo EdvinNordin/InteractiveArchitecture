@@ -3,13 +3,18 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 
-const allowedOrigins = ["https://interactivearchitecture.onrender.com", "http://localhost:5173"]; // For dev and production
+const allowedOrigins = ["https://interactivearchitecture.onrender.com", "http://localhost:1234"]; // For dev and production
 const io = require("socket.io")(server, {
     cors: {
         origin: allowedOrigins, // Accept an array of allowed origins
         methods: ["GET", "POST"],
     },
 });
+/*
+"dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+    */
 
 app.get('/', (req, res) => {
     res.send('<h1>What are you doing here?</h1>');

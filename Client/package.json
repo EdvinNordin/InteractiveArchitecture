@@ -1,17 +1,16 @@
 {
   "name": "interactive_architecture",
+  "source": "index.html",
   "description": "my node project",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "start": "parcel",
+    "build": "parcel build"
   },
   "dependencies": {
-    "@rollup/plugin-inject": "^5.0.5",
-    "buffer": "^6.0.3",
     "express": "^4.21.2",
+    "parcel": "^2.13.3",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "three": "^0.172.0"
@@ -20,6 +19,8 @@
     "@babel/core": "^7.26.0",
     "@babel/preset-env": "^7.26.0",
     "babel-loader": "^9.2.1",
-    "vite": "^6.0.7"
+    "buffer": "^6.0.3",
+    "vite": "^5.2.10",
+    "vite-plugin-node-polyfills": "^0.22.0"
   }
 }

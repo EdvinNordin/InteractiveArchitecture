@@ -1,17 +1,23 @@
-import { Buffer } from 'buffer';
+/*import process from "process";
+import { Buffer } from "buffer";
+import EventEmitter from "events";
+
 window.Buffer = Buffer;
+window.process = process;
+window.EventEmitter = EventEmitter;*/
+
 import * as THREE from "three";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 import {io} from "socket.io-client";
 
 import {camera, scene, renderer, composer} from "./setup.js";
 import {applyQuaternion, clamp, getYawRotation, getPitchRotation} from "./utils.js";
-import {getCellKey, setObjectCells, getObjectsInCell, cellStart} from "./spatiParti";
+import {setObjectCells, getObjectsInCell} from "./spatiParti";
 
 import {Rhino3dmLoader} from "three/examples/jsm/loaders/3DMLoader.js";
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
 import {randInt} from "three/src/math/MathUtils";
-import {Socket} from "socket.io";
+
 
 let rand = randInt(0, 100);
 
@@ -117,8 +123,8 @@ class LinkedList {
 
 const playerList = new LinkedList();
 // NETWORKING #####################################################################################
-//const socket = io.connect('https://interactivearchitecturebackend.onrender.com');
-const socket = io.connect('localhost:3000');
+const socket = io.connect('https://interactivearchitecturebackend.onrender.com');
+//const socket = io.connect('localhost:3000');
 
 socket.on('playerList', (serverList) => {
     playerList.copy(serverList);
