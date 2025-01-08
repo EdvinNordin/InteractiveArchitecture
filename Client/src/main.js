@@ -115,7 +115,7 @@ class LinkedList {
 
 const playerList = new LinkedList();
 // NETWORKING #####################################################################################
-const socket = io.connect('https://interactive-architecture.onrender.com');
+const socket = io.connect('https://interactivearchitecturebackend.onrender.com');
 
 socket.on('playerList', (serverList) => {
     playerList.copy(serverList);
