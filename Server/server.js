@@ -76,7 +76,7 @@ var Players = new LinkedList();
 io.on('connection', (socket) => {
 
     Players.add(socket.id, 0, -0, 0);
-
+    console.log('a user connected');
     socket.broadcast.emit('newPlayer', socket.id);
     
     socket.emit('playerList', Players);
@@ -95,7 +95,7 @@ io.on('connection', (socket) => {
       socket.broadcast.emit('removePlayer', socket.id);
     });
   });
-
-server.listen(3000, '0.0.0.0', () => {
+//'0.0.0.0'
+server.listen(3000, () => {
   console.log('listening on *:3000');
 });
