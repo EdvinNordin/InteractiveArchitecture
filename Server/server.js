@@ -20,13 +20,6 @@ server.listen(PORT, () => {
     console.log(`listening on *:${PORT}`);
 });
 
-/*
-// Route handler
-app.get('/', (req, res) => {
-    res.send('<h1>Hello world</h1>');
-  });
- */
-
 class Player  {
     constructor(id, x, y, z) {
         this.id = id;
@@ -83,17 +76,17 @@ class LinkedList {
     }
 }
 
-var Players = new LinkedList();
+let Players = new LinkedList();
 
 io.on('connection', (socket) => {
 
     Players.add(socket.id, 0, -0, 0);
-    console.log('a user connected');
+    console.log(socket.id + ' has connected');
     socket.broadcast.emit('newPlayer', socket.id);
     
     socket.emit('playerList', Players);
 
-    socket.on('player position', (pos, rot) => {
+    socket.on('player position', (pos) => {
       //console.log('playerPos', pos, rot, socket.id);
         socket.broadcast.emit('update position', pos, socket.id);
     });
@@ -102,8 +95,13 @@ io.on('connection', (socket) => {
       socket.broadcast.emit('update rotation', rot, socket.id);
     });
 
+    socket.on('player jump', () => {
+      socket.broadcast.emit('player jump', socket.id);
+    });
+
     socket.on('disconnect', () => {
       Players.remove(socket.id);
       socket.broadcast.emit('removePlayer', socket.id);
+      console.log(socket.id + ' has disconnected');
     });
   });

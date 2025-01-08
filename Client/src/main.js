@@ -1,3 +1,5 @@
+import { Buffer } from 'buffer';
+window.Buffer = Buffer;
 import * as THREE from "three";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 import {io} from "socket.io-client";
@@ -9,8 +11,8 @@ import {getCellKey, setObjectCells, getObjectsInCell, cellStart} from "./spatiPa
 import {Rhino3dmLoader} from "three/examples/jsm/loaders/3DMLoader.js";
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
 import {randInt} from "three/src/math/MathUtils";
-import {sqrt} from "three/nodes";
-import {FrontSide} from "three";
+import {Socket} from "socket.io";
+
 let rand = randInt(0, 100);
 
 class Player {
@@ -116,6 +118,7 @@ class LinkedList {
 const playerList = new LinkedList();
 // NETWORKING #####################################################################################
 const socket = io.connect('https://interactivearchitecturebackend.onrender.com');
+//const socket = io.connect('localhost:3000');
 
 socket.on('playerList', (serverList) => {
     playerList.copy(serverList);
@@ -132,7 +135,7 @@ socket.on('update position', (pos, id) => {
     player.sent = true;
     player.model.position.set(pos.x, pos.y - modelHeight, pos.z);
 
-    if (player.mixer.clipAction(animations[2]).isRunning()) {
+    if (player.mixer.clipAction(animations[2]).isRunning() && !player.mixer.clipAction(animations[3]).isRunning()) {
         player.mixer.clipAction(animations[2]).stop();
         player.mixer.clipAction(animations[10]).play();
     }
@@ -144,6 +147,13 @@ socket.on('update rotation', (rot, id) => {
     player.model.quaternion.copy(getYawRotation(rot));
     player.head.quaternion.copy(getPitchRotation(rot));
 });
+
+socket.on('update jump', (id) => {
+    const player = playerList.find(id);
+    player.mixer.clipAction(animations[10]).stop();
+    player.mixer.clipAction(animations[2]).stop();
+    player.mixer.clipAction(animations[3]).play();
+})
 
 socket.on('removePlayer', (id) => {
     playerList.remove(id);
@@ -299,10 +309,7 @@ loader.load(
         object.position.x = 150;
         let i = 0;
         scene.add(object);
-        /*let box = new THREE.Box3().setFromObject(object, false);
-        let center = new THREE.Vector3();
-        box.getCenter(center);*/
-/*
+
         object.traverse((child) => {
             if (child.isMesh) {
                 i++;
@@ -321,7 +328,8 @@ loader.load(
         console.log(error);
     }
 );
-
+*/
+/*
 loader.load(
     "byReduced.3dm",
     function (object) {
@@ -333,8 +341,8 @@ loader.load(
         /*let box = new THREE.Box3().setFromObject(object, false);
         let center = new THREE.Vector3();
         box.getCenter(center);
-        let i = 0;*/
-/*
+        let i = 0;
+
         object.traverse((child) => {
             if (child.isMesh) {
                 child.material.metalness = 0;
@@ -461,27 +469,26 @@ function move(delta) {
         moving = true;
         inputAmount++;
     }
-    if (upBool) {
-        up.set(0, speed, 0);
+    if (upBool && !isJumping) {
+        //up.set(0, speed, 0);
         //up = applyQuaternion(up, qx);
-        camera.position.add(up);
+        isJumping = true;
+        jumpHeight = 0.05;
+        //camera.position.add(up);
         moving = true;
+        socket.emit('player jump');
     }
     if (downBool) {
         down.set(0, -speed, 0);
         //down = applyQuaternion(down, qx);
-        camera.position.add(down);
-        moving = true;
+        //camera.position.add(down);
+        //moving = true;
     }
     if(inputAmount > 0){
         let totDir = forward.add(backward.add(left.add(right)));
-        movement = totDir.divideScalar(Math.sqrt(inputAmount));
+        movement = totDir.divideScalar(Math.sqrt(inputAmount)); //
         camera.position.add(movement);
     }
-
-
-
-
 
     //.log(rayCaster.ray.origin);
     floor(rayCaster);
@@ -489,21 +496,22 @@ function move(delta) {
     if (moving) {
         socket.emit('player position', {x: camera.position.x, y: camera.position.y, z: camera.position.z});
     }
-    moving = false;
+    if(!isJumping) moving = false;
 }
 let rayStart = (camera.position);//new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
 
 const direction = new THREE.Vector3(0, -1, 0);
 let rayCaster = new THREE.Raycaster(rayStart, direction, 0, 5);
 
+let isJumping = false;
+let jumpHeight = 0;
+
 // ANIMATION LOOP ###############################################################
 const stats = Stats();
 document.body.appendChild(stats.dom);
-
 const clock = new THREE.Clock();
 let delta;
 animate();
-
 function animate() {
     //loops the animate function
     requestAnimationFrame(animate);
@@ -511,20 +519,6 @@ function animate() {
     delta = clock.getDelta();
     // Move the camera
     move(delta);
-    /*const nearbyWalkableObjects = getObjectsInNearbyCells(camera.position, grid, cellSize); // Use grid
-    const intersections = rayCaster.intersectObjects(nearbyWalkableObjects, true); // Perform raycast
-    //console.log();
-    if (intersections.length > 0) {
-        const distance = intersections[0].distance;
-
-        if (distance < maxStepHeight) {
-            camera.position.y += modelHeight - distance;
-        } else {
-            camera.position.y = camera.position.y - (distance - modelHeight);
-        }
-    } else {
-        camera.position.y -= 5; // Fallback for no intersection
-    }*/
 
     runAnimations();
     //console.log(getCellKey(camera.position, cellSize));
@@ -572,7 +566,16 @@ function floor(rayCaster){
             }
         }
     }
-    if(closestObject) {
+    if(isJumping && (modelHeight - distance) > 0) {
+        isJumping = false;
+        jumpHeight = 0;
+    }else if(isJumping){
+        jumpHeight -= 0.001;
+        camera.position.y += jumpHeight;
+    }
+
+    if(!isJumping){
+        if(closestObject) {
 
             if ((modelHeight - distance) > 0) {
 
@@ -581,8 +584,9 @@ function floor(rayCaster){
                 camera.position.y -= (distance - modelHeight);
             }
 
-    }else {
-        camera.position.y -= 0.07;
+        }else {
+            camera.position.y -= 0.07;
+        }
     }
 }
 
@@ -592,7 +596,7 @@ function runAnimations() {
         if (current.mixer) {
             current.mixer.update(delta);
 
-            if (!current.sent && current.mixer.clipAction(animations[10]).isRunning()) {
+            if (!current.sent && current.mixer.clipAction(animations[10]).isRunning() && !current.mixer.clipAction(animations[2]).isRunning()) {
                 current.mixer.clipAction(animations[10]).stop();
                 current.mixer.clipAction(animations[2]).play();
             }
@@ -602,3 +606,18 @@ function runAnimations() {
     }
 }
 
+
+/*const nearbyWalkableObjects = getObjectsInNearbyCells(camera.position, grid, cellSize); // Use grid
+const intersections = rayCaster.intersectObjects(nearbyWalkableObjects, true); // Perform raycast
+//console.log();
+if (intersections.length > 0) {
+    const distance = intersections[0].distance;
+
+    if (distance < maxStepHeight) {
+        camera.position.y += modelHeight - distance;
+    } else {
+        camera.position.y = camera.position.y - (distance - modelHeight);
+    }
+} else {
+    camera.position.y -= 5; // Fallback for no intersection
+}*/
