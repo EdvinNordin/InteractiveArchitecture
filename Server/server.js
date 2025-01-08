@@ -2,11 +2,13 @@ const express = require('express');
 const app = express();
 const http = require('http');
 const server = http.createServer(app);
+
+const allowedOrigins = ["https://edvinnordin-github-io.onrender.com", "http://localhost:5173"]; // For dev and production
 const io = require("socket.io")(server, {
-  cors: {
-    origin: "https://edvinnordin-github-io.onrender.com/",//"http://localhost:5173",
-    methods: ["GET", "POST"]
-  }
+    cors: {
+        origin: allowedOrigins, // Accept an array of allowed origins
+        methods: ["GET", "POST"],
+    },
 });
 
 app.get('/', (req, res) => {
