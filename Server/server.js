@@ -9,12 +9,8 @@ const io = require("socket.io")(server, {
   }
 });
 
-const path = require('path');
-// Serve static files from the "dist" folder
-app.use('/Client', express.static(path.join(__dirname, '../Client/dist')));
-
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../Client/dist', 'index.html'));
+app.get('/', (req, res) => {
+    res.send('<h1>Backend is running!</h1>');
 });
 /*
 // Route handler
