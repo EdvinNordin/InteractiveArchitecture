@@ -9,11 +9,20 @@ const io = require("socket.io")(server, {
   }
 });
 
+const path = require('path');
+// Serve static files from the "dist" folder
+app.use('/Client', express.static(path.join(__dirname, 'dist')));
+
+// Optional: fallback for single-page apps
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+/*
 // Route handler
 app.get('/', (req, res) => {
     res.send('<h1>Hello world</h1>');
   });
- 
+ */
 
 class Player  {
     constructor(id, x, y, z) {
