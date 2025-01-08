@@ -4,7 +4,7 @@ const http = require('http');
 const server = http.createServer(app);
 const io = require("socket.io")(server, {
   cors: {
-    origin: "*",//"http://localhost:5173",
+    origin: "https://edvinnordin-github-io.onrender.com/",//"http://localhost:5173",
     methods: ["GET", "POST"]
   }
 });
@@ -12,6 +12,12 @@ const io = require("socket.io")(server, {
 app.get('/', (req, res) => {
     res.send('<h1>Backend is running!</h1>');
 });
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`listening on *:${PORT}`);
+});
+
 /*
 // Route handler
 app.get('/', (req, res) => {
@@ -99,7 +105,3 @@ io.on('connection', (socket) => {
       socket.broadcast.emit('removePlayer', socket.id);
     });
   });
-//'0.0.0.0'
-server.listen(3000, () => {
-  console.log('listening on *:3000');
-});
