@@ -11,11 +11,10 @@ const io = require("socket.io")(server, {
 
 const path = require('path');
 // Serve static files from the "dist" folder
-app.use('/Client', express.static(path.join(__dirname, 'dist')));
+app.use('/Client', express.static(path.join(__dirname, '../Client/dist')));
 
-// Optional: fallback for single-page apps
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    res.sendFile(path.join(__dirname, '../Client/dist', 'index.html'));
 });
 /*
 // Route handler
