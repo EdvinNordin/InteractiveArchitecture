@@ -12,7 +12,7 @@ const io = require("socket.io")(server, {
 });
 
 app.get('/', (req, res) => {
-    res.send('<h1>Backend is running!</h1>');
+    res.send('<h1>What are you doing here?</h1>');
 });
 
 const PORT = process.env.PORT || 3000;
