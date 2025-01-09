@@ -114,7 +114,8 @@ class LinkedList {
 
 const playerList = new LinkedList();
 // NETWORKING #####################################################################################
-const socket = io.connect('https://interactivearchitecturebackend.onrender.com');
+//let socket = io.connect('https://interactivearchitecturebackend.onrender.com');
+const socket = io.connect('localhost:3000');
 //const socket = io.connect('localhost:3000');
 
 
@@ -169,8 +170,8 @@ let head;
 
 //1: Dance, 3: Idle, 7: running, 11: walking (-1)
 function spawnRobot(callback) {
-// Load a glTF resource ../public/robot.glb
-    GLTFloader.load("/robot.glb", function (gltf) {
+// Load a glTF resource ../public1/robot.glb
+    GLTFloader.load("./robot.glb", function (gltf) {
             robot = gltf.scene;
             animations = gltf.animations;
             robot.position.set(0, 0, 0);
