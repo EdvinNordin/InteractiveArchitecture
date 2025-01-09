@@ -3,6 +3,7 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const cors = require("cors");
+const mime = require("mime");
 const allowedOrigins = ["https://interactivearchitecture.onrender.com", "http://localhost:5173"]; // For dev and production
 const io = require("socket.io")(server, {
     cors: {
@@ -81,7 +82,7 @@ let Players = new LinkedList();
 io.on('connection', (socket) => {
 
     Players.add(socket.id, 0, -0, 0);
-    //console.log(socket.id + ' has connected');
+    console.log(socket.id + ' has connected');
     socket.broadcast.emit('newPlayer', socket.id);
     
     socket.emit('playerList', Players);
@@ -102,6 +103,6 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
       Players.remove(socket.id);
       socket.broadcast.emit('removePlayer', socket.id);
-      //console.log(socket.id + ' has disconnected');
+      console.log(socket.id + ' has disconnected');
     });
   });

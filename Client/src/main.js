@@ -10,7 +10,6 @@ import {Rhino3dmLoader} from "three/examples/jsm/loaders/3DMLoader.js";
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
 import {randInt} from "three/src/math/MathUtils.js";
 
-
 let rand = randInt(0, 100);
 //1
 class Player {
@@ -171,7 +170,7 @@ let head;
 //1: Dance, 3: Idle, 7: running, 11: walking (-1)
 function spawnRobot(callback) {
 // Load a glTF resource ../public/robot.glb
-    GLTFloader.load("/robot.glb", function (gltf) {
+    GLTFloader.load("https://interactivearchitecturebackend.onrender.com/robot.glb", function (gltf) {
             robot = gltf.scene;
             animations = gltf.animations;
             robot.position.set(0, 0, 0);
