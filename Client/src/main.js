@@ -114,8 +114,8 @@ class LinkedList {
 
 const playerList = new LinkedList();
 // NETWORKING #####################################################################################
-//let socket = io.connect('https://interactivearchitecturebackend.onrender.com');
-const socket = io.connect('localhost:3000');
+const socket = io.connect('https://interactivearchitecturebackend.onrender.com');
+//const socket = io.connect('localhost:3000');
 //const socket = io.connect('localhost:3000');
 
 
