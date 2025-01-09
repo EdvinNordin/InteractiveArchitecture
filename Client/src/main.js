@@ -115,10 +115,9 @@ class LinkedList {
 
 const playerList = new LinkedList();
 // NETWORKING #####################################################################################
-let socket = io.connect('https://interactivearchitecturebackend.onrender.com');
-//if(!socket.connected) socket = io.connect('localhost:3000');
+const socket = io.connect('https://interactivearchitecturebackend.onrender.com');
+//const socket = io.connect('localhost:3000');
 
-console.log(socket);
 
 socket.on('playerList', (serverList) => {
     playerList.copy(serverList);
@@ -172,7 +171,7 @@ let head;
 //1: Dance, 3: Idle, 7: running, 11: walking (-1)
 function spawnRobot(callback) {
 // Load a glTF resource ../public/robot.glb
-    GLTFloader.load("robot.glb", function (gltf) {
+    GLTFloader.load("/robot.glb", function (gltf) {
             robot = gltf.scene;
             animations = gltf.animations;
             robot.position.set(0, 0, 0);
@@ -207,7 +206,7 @@ let planeMesh = new THREE.Mesh();
 planeMesh.geometry = new THREE.PlaneGeometry(1000, 1000, 1, 1);
 planeMesh.rotation.x = -Math.PI / 2;
 
-const texture = new THREE.TextureLoader().load("stacked-stones.jpg");
+const texture = new THREE.TextureLoader().load("/stacked-stones.jpg");
 texture.wrapS = THREE.RepeatWrapping;
 texture.wrapT = THREE.RepeatWrapping;
 texture.repeat.set(50, 50);
@@ -234,7 +233,7 @@ loader.setLibraryPath("https://cdn.jsdelivr.net/npm/rhino3dm@8.4.0/");
 let scale = 0.0013;
 
 
-loader.load("baken.3dm", function (object) {
+loader.load("/baken.3dm", function (object) {
         object.rotation.x = -Math.PI / 2; // rotate the model
         object.scale.set(scale, scale, scale);
         object.position.z = -5;
