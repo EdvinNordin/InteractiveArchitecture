@@ -170,7 +170,7 @@ let head;
 
 //1: Dance, 3: Idle, 7: running, 11: walking (-1)
 function spawnRobot(callback) {
-// Load a glTF resource ../public1/robot.glb
+// Load a glTF resource ../public/robot.glb
     GLTFloader.load("./robot.glb", function (gltf) {
             robot = gltf.scene;
             animations = gltf.animations;
