@@ -2,19 +2,14 @@ const express = require('express');
 const app = express();
 const http = require('http');
 const server = http.createServer(app);
-
-const allowedOrigins = ["https://interactivearchitecture.onrender.com", "http://localhost:1234"]; // For dev and production
+const cors = require("cors");
+const allowedOrigins = ["https://interactivearchitecture.onrender.com", "http://localhost:5173"]; // For dev and production
 const io = require("socket.io")(server, {
     cors: {
         origin: allowedOrigins, // Accept an array of allowed origins
         methods: ["GET", "POST"],
     },
 });
-/*
-"dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-    */
 
 app.get('/', (req, res) => {
     res.send('<h1>What are you doing here?</h1>');
@@ -86,7 +81,7 @@ let Players = new LinkedList();
 io.on('connection', (socket) => {
 
     Players.add(socket.id, 0, -0, 0);
-    console.log(socket.id + ' has connected');
+    //console.log(socket.id + ' has connected');
     socket.broadcast.emit('newPlayer', socket.id);
     
     socket.emit('playerList', Players);
@@ -107,6 +102,6 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
       Players.remove(socket.id);
       socket.broadcast.emit('removePlayer', socket.id);
-      console.log(socket.id + ' has disconnected');
+      //console.log(socket.id + ' has disconnected');
     });
   });

@@ -1,26 +1,18 @@
-/*import process from "process";
-import { Buffer } from "buffer";
-import EventEmitter from "events";
-
-window.Buffer = Buffer;
-window.process = process;
-window.EventEmitter = EventEmitter;*/
-
 import * as THREE from "three";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 import {io} from "socket.io-client";
 
 import {camera, scene, renderer, composer} from "./setup.js";
 import {applyQuaternion, clamp, getYawRotation, getPitchRotation} from "./utils.js";
-import {setObjectCells, getObjectsInCell} from "./spatiParti";
+import {setObjectCells, getObjectsInCell} from "./spatiParti.js";
 
 import {Rhino3dmLoader} from "three/examples/jsm/loaders/3DMLoader.js";
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
-import {randInt} from "three/src/math/MathUtils";
+import {randInt} from "three/src/math/MathUtils.js";
 
 
 let rand = randInt(0, 100);
-
+//1
 class Player {
     constructor(id) {
         this.id = id;
@@ -123,13 +115,14 @@ class LinkedList {
 
 const playerList = new LinkedList();
 // NETWORKING #####################################################################################
-const socket = io.connect('https://interactivearchitecturebackend.onrender.com');
-//const socket = io.connect('localhost:3000');
+//const socket = io.connect('https://interactivearchitecturebackend.onrender.com');
+const socket = io.connect('localhost:3000');
 
 socket.on('playerList', (serverList) => {
     playerList.copy(serverList);
     //console.log(socket.id);
 });
+
 
 socket.on('newPlayer', (id) => {
     playerList.add(id);
@@ -166,6 +159,7 @@ socket.on('removePlayer', (id) => {
 });
 
 
+
 // MODELS ##############################################################################
 const GLTFloader = new GLTFLoader();
 let animations;
@@ -175,8 +169,8 @@ let head;
 
 //1: Dance, 3: Idle, 7: running, 11: walking (-1)
 function spawnRobot(callback) {
-// Load a glTF resource
-    GLTFloader.load("Robot.glb", function (gltf) {
+// Load a glTF resource ../public/robot.glb
+    GLTFloader.load("robot.glb", function (gltf) {
             robot = gltf.scene;
             animations = gltf.animations;
             robot.position.set(0, 0, 0);
@@ -206,12 +200,12 @@ function spawnRobot(callback) {
 
 const cellSize = 5;
 let grid = {};
-let walkableObjects = [];
 
 let planeMesh = new THREE.Mesh();
 planeMesh.geometry = new THREE.PlaneGeometry(1000, 1000, 1, 1);
 planeMesh.rotation.x = -Math.PI / 2;
-const texture = new THREE.TextureLoader().load("stacked-stones.jpg");
+
+const texture = new THREE.TextureLoader().load("../models/stacked-stones.jpg");
 texture.wrapS = THREE.RepeatWrapping;
 texture.wrapT = THREE.RepeatWrapping;
 texture.repeat.set(50, 50);
@@ -219,54 +213,26 @@ planeMesh.material = new THREE.MeshStandardMaterial({
     map: texture,
     side: THREE.FrontSide,
 });
+
 //planeMesh.position.set(1,1,1);
 planeMesh.name="plane";
 scene.add(planeMesh);
 planeMesh.position.set(0, 0, 0);
-
+/*
+planeMesh.material = new THREE.MeshStandardMaterial({
+})
+planeMesh.material.color.setHex( 0xcccccc );
+*/
 //addToGrid(planeMesh, grid, cellSize);
 setObjectCells(planeMesh, grid, cellSize);
-//walkableObjects.push(planeMesh);
 
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath("https://cdn.jsdelivr.net/npm/rhino3dm@8.4.0/");
 
 let scale = 0.0013;
 
-loader.load("land.3dm", function (object) {
-    //object.rotation.x = -Math.PI / 2; // rotate the model
-    //object.position.y = 50;
-    //object.scale.set(scale, scale, 0.008);
-    let box = new THREE.Box3().setFromObject(object, false);
-    let center = new THREE.Vector3();
-    box.getCenter(center);
-    let i = 1;
-    object.traverse((child) => {
-        if (child.isMesh) {
-            child.material.metalness = 0;
-            child.material.side = 0;
-            child.recieveShadow = true;
-            child.castShadow = true;
-            child.material.wireframe = false;
-            //console.log(child);
-            if (i === 1) {
-                child.rotation.x = -Math.PI / 2; // rotate the model
-                child.position.y = 0;
-                child.scale.set(0.0008, 0.0008, 0.008);
-                walkableObjects.push(child);
-                //scene.add(child);
-
-            }
-            i++;
-        }
-    });
-}, function (progress) {
-    //console.log((progress.loaded / progress.total) * 100 + "%");
-}, function (error) {
-    console.log(error);
-});
-
-loader.load("baken_mesh_color-var1.3dm", function (object) {
+/*
+loader.load("./models/baken.3dm", function (object) {
         object.rotation.x = -Math.PI / 2; // rotate the model
         object.scale.set(scale, scale, scale);
         object.position.z = -5;
@@ -286,13 +252,12 @@ loader.load("baken_mesh_color-var1.3dm", function (object) {
                 child.recieveShadow = true;
                 child.castShadow = true;
                 if (child.material.name === "Paint") {
-                    //walkableObjects.push(child);
                     child.name = "Stairs";
                     setObjectCells(child, grid, cellSize);
-                    child.material.wireframe = false;
-                    child.material.side = "double";
 
-                    //addToGrid(child, grid, cellSize);
+                }else{
+                    child.name = "Wall";
+                    setObjectCells(child, grid, cellSize);
                 }
 
             }
@@ -305,6 +270,41 @@ loader.load("baken_mesh_color-var1.3dm", function (object) {
         console.log(error);
     }
 );
+
+/*
+loader.load("land.3dm", function (object) {
+    //object.rotation.x = -Math.PI / 2; // rotate the model
+    //object.position.y = 50;
+    //object.scale.set(scale, scale, 0.008);
+    let box = new THREE.Box3().setFromObject(object, false);
+    let center = new THREE.Vector3();
+    box.getCenter(center);
+    let i = 1;
+    object.traverse((child) => {
+        if (child.isMesh) {
+            child.material.metalness = 0;
+            child.material.side = 0;
+            child.recieveShadow = true;
+            child.castShadow = true;
+            child.material.wireframe = false;
+            //console.log(child);
+            if (i === 1) {
+                child.rotation.x = -Math.PI / 2; // rotate the model
+                child.position.y = 0;
+                child.scale.set(scale, scale, scale);
+                scene.add(child);
+
+            }
+            i++;
+        }
+    });
+}, function (progress) {
+    //console.log((progress.loaded / progress.total) * 100 + "%");
+}, function (error) {
+    console.log(error);
+});
+*/
+
 /*
 loader.load(
     "net.3dm",
@@ -423,7 +423,7 @@ document.addEventListener("keydown", (e) => {
         if (e.key === "a" || e.key === "ArrowLeft") leftBool = true;
         if (e.key === "d" || e.key === "ArrowRight") rightBool = true;
         if (e.key === " ") upBool = true;
-        if (e.key === "Shift") downBool = true;
+        if (e.key === "Shift") console.log('%c ', 'font-size:400px; background:url(https://pics.me.me/codeit-google-until-youfinda-stackoverflow-answerwith-code-to-copy-paste-34126823.png) no-repeat;');//downBool = true;
 
     }
 });
@@ -521,7 +521,6 @@ animate();
 function animate() {
     //loops the animate function
     requestAnimationFrame(animate);
-
     delta = clock.getDelta();
     // Move the camera
     move(delta);
