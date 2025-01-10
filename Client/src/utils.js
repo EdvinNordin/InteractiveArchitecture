@@ -27,14 +27,14 @@ export function getYawRotation(rotation) {
     const incomingQuaternion = new THREE.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
 
     // Convert the quaternion to Euler angles
-    const euler = new THREE.Euler().setFromQuaternion(incomingQuaternion, 'YXZ'); // YXZ order to prioritize horizontal rotation
+    const euler = new THREE.Euler().setFromQuaternion(incomingQuaternion, 'YXZ'); // Clone it here
 
-    // Extract pitch (up/down) and yaw (side-to-side)
-    const yaw = euler.y;    // Rotations around Y-axis (horizontal)
+    const yaw = euler.y;
 
-    // Apply yaw to the body
-    return new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+    // Return yaw rotation as a quaternion
+    const yawRot = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
 
+    return yawRot;
 }
 
 export function getPitchRotation(rotation) {
@@ -44,5 +44,7 @@ export function getPitchRotation(rotation) {
 
     const pitch = -euler.x;  // Rotations around X-axis (vertical)
     // Apply pitch to the head
-    return new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitch);
+    const pitchRot = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitch);
+
+    return pitchRot;
 }

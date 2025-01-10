@@ -5,7 +5,10 @@ import { Sky } from "./sky.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { SAOPass } from "three/examples/jsm/postprocessing/SAOPass.js";
-import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";import {randInt} from "three/src/math/MathUtils.js";
+
+let randX = randInt(0, 5);
+let randZ = randInt(0, 5);
 
 let sky, sun, composer, renderPass, saoPass;
 
@@ -24,7 +27,7 @@ let camera = new THREE.PerspectiveCamera(
   0.1,
   100
 );
-camera.position.set(0, 0.9, 0);
+camera.position.set(randX, 0.9, randZ);
 
 let dirLight = new THREE.DirectionalLight(0xffffff, 1);
 dirLight.castShadow = true;

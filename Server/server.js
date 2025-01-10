@@ -4,7 +4,8 @@ const http = require('http');
 const server = http.createServer(app);
 const cors = require("cors");
 const mime = require("mime");
-const allowedOrigins = ["https://interactivearchitecture.onrender.com", "http://localhost:5173"]; // For dev and production
+
+const allowedOrigins = ["https://interactivearchitecture.onrender.com", "http://localhost:5173", "http://localhost:5174"]; // For dev and production
 const io = require("socket.io")(server, {
     cors: {
         origin: allowedOrigins, // Accept an array of allowed origins
@@ -22,11 +23,9 @@ server.listen(PORT, () => {
 });
 
 class Player  {
-    constructor(id, x, y, z) {
+    constructor(id) {
         this.id = id;
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.ready = false;
         this.next = null;
     }
 }
@@ -38,12 +37,12 @@ class LinkedList {
       this.size = 0;
     }
 
-    add(id, x, y, z)
-    {
-        var player = new Player(id, x, y, z);
-        var current;
-        if (this.head == null)
+    add(id) {
+        const player = new Player(id);
+        let current;
+        if (this.head == null) {
             this.head = player;
+        }
         else {
             current = this.head;
             while (current.next) {
@@ -80,15 +79,23 @@ class LinkedList {
 let Players = new LinkedList();
 
 io.on('connection', (socket) => {
+    //console.log(socket.id + ' has connected');
 
-    Players.add(socket.id, 0, -0, 0);
-    console.log(socket.id + ' has connected');
-    socket.broadcast.emit('newPlayer', socket.id);
-    
-    socket.emit('playerList', Players);
+    socket.on('player ready', () => {
+        //console.log(socket.id + ' is ready');
+        socket.emit('give list', Players);
+        Players.add(socket.id);
+        socket.broadcast.emit('new player', socket.id);
+        //console.log(Players.size);
+    });
+
+    socket.on('give state', (pos, rot, sender) => {
+        //console.log('Rotation:', rot);
+        socket.to(sender).emit('set state', pos, rot, socket.id);
+    })
 
     socket.on('player position', (pos) => {
-      //console.log('playerPos', pos, rot, socket.id);
+      //console.log('playerPos', pos, socket.id);
         socket.broadcast.emit('update position', pos, socket.id);
     });
 
@@ -103,6 +110,6 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
       Players.remove(socket.id);
       socket.broadcast.emit('removePlayer', socket.id);
-      console.log(socket.id + ' has disconnected');
+      //console.log(socket.id + ' has disconnected');
     });
-  });
+});

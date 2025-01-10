@@ -5,31 +5,21 @@ import {io} from "socket.io-client";
 import {camera, scene, renderer, composer} from "./setup.js";
 import {applyQuaternion, clamp, getYawRotation, getPitchRotation} from "./utils.js";
 import {setObjectCells, getObjectsInCell} from "./spatiParti.js";
+import * as constant from "./constants.js";
 
 import {Rhino3dmLoader} from "three/examples/jsm/loaders/3DMLoader.js";
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
-import {randInt} from "three/src/math/MathUtils.js";
 
-let rand = randInt(0, 100);
-//1
+
 class Player {
     constructor(id) {
         this.id = id;
-        this.model = new THREE.Object3D();
-        this.mixer = null;
-        this.head = null;
-        //this.lastPosition = new THREE.Vector3();
-        this.sent = false;
-
-        spawnRobot((robot, mixer, head) => {
-            this.model = robot;
-            this.mixer = mixer;
-            this.head = head;
-        });
-        //this.model.position.set(rand, rand, rand);
-        //this.head.material.wireframe = true;
+        this.model = robot.clone(true);
+        this.modelHead = this.model.getObjectByName("Head");
+        this.mixer = new THREE.AnimationMixer(this.model);
+        this.mixer.clipAction(animations[2]).play();
         this.next = null;
-
+        scene.add(this.model);
     }
 
     destroy() {
@@ -40,22 +30,23 @@ class Player {
 class LinkedList {
     constructor() {
         this.head = null;
-        this.size = 0;
+        this.size = 1;
     }
 
     add(id) {
-        if (id !== socket.id) { //remove if playerlist should have own player
+        if (id !== client.id) { //remove if playerlist should have own player
             const player = new Player(id);
             let current;
-            if (this.head == null) this.head = player; else {
+            if (this.head == null) {
+                this.head = player;
+            }
+            else {
                 current = this.head;
                 while (current.next) {
                     current = current.next;
                 }
                 current.next = player;
             }
-
-            player.model.position.set(0,0, 0);
             this.size++;
         }
     }
@@ -113,93 +104,97 @@ class LinkedList {
 }
 
 const playerList = new LinkedList();
-// NETWORKING #####################################################################################
-const socket = io.connect('https://interactivearchitecturebackend.onrender.com');
-//const socket = io.connect('localhost:3000');
-//const socket = io.connect('localhost:3000');
+//// NETWORKING #####################################################################################
+const client = io.connect('https://interactivearchitecturebackend.onrender.com');
+//const client = io.connect('localhost:3000');
 
 
-socket.on('playerList', (serverList) => {
+client.on('give list', (serverList) => {
     playerList.copy(serverList);
-    //console.log(socket.id);
+    ready = true;
 });
 
 
-socket.on('newPlayer', (id) => {
+client.on('new player', (id) => {
     playerList.add(id);
-    //console.log(playerList.size);
-});
-let modelHeight = 0.9;
-socket.on('update position', (pos, id) => {
-    const player = playerList.find(id);
-    player.sent = true;
-    player.model.position.set(pos.x, pos.y - modelHeight, pos.z);
 
-    if (player.mixer.clipAction(animations[2]).isRunning() && !player.mixer.clipAction(animations[3]).isRunning()) {
-        player.mixer.clipAction(animations[2]).stop();
-        player.mixer.clipAction(animations[10]).play();
-    }
+    client.emit('give state', camera.position, camera.quaternion, id);
 
 });
 
-socket.on('update rotation', (rot, id) => {
-    const player = playerList.find(id);
+client.on('set state', (pos, rot, id) => {
+    let player = playerList.find(id);
+    player.model.position.set(pos.x, pos.y - constant.modelHeight, pos.z);
+
+    //player.model.quaternion.set(rot);
+    //player.modelHead.quaternion.set(rot);
+
     player.model.quaternion.copy(getYawRotation(rot));
-    player.head.quaternion.copy(getPitchRotation(rot));
-});
-
-socket.on('update jump', (id) => {
-    const player = playerList.find(id);
-    player.mixer.clipAction(animations[10]).stop();
-    player.mixer.clipAction(animations[2]).stop();
-    player.mixer.clipAction(animations[3]).play();
+    player.modelHead.quaternion.copy(getPitchRotation(rot));
 })
 
-socket.on('removePlayer', (id) => {
-    playerList.remove(id);
+client.on('update position', (pos, id) => {
+    if(ready){
+        const player = playerList.find(id);
+        player.model.position.set(pos.x, pos.y - constant.modelHeight, pos.z);
+
+        if (player.mixer.clipAction(animations[2]).isRunning() && !player.mixer.clipAction(animations[3]).isRunning()) {
+            player.mixer.clipAction(animations[2]).stop();
+            player.mixer.clipAction(animations[10]).play();
+        }
+    }
+});
+//0.09381591630267129, -0.4675207063025343, 0.04998006037269623, 0.8775676364769904
+client.on('update rotation', (rot, id) => {
+    if(ready) {
+        const player = playerList.find(id);
+        let yaw = getYawRotation(rot);
+        let pitch = getPitchRotation(rot);
+        player.model.quaternion.set(yaw.x, yaw.y, yaw.z, yaw.w);
+        player.modelHead.quaternion.set(pitch.x, pitch.y, pitch.z, pitch.w);
+    }
 });
 
+client.on('update jump', (id) => {
+    if(ready) {
+        const player = playerList.find(id);
+        player.mixer.clipAction(animations[10]).stop();
+        player.mixer.clipAction(animations[2]).stop();
+        player.mixer.clipAction(animations[3]).play();
+    }
+})
 
+
+client.on('removePlayer', (id) => {
+    playerList.remove(id);
+});
 
 // MODELS ##############################################################################
 const GLTFloader = new GLTFLoader();
 let animations;
-let robot = new THREE.Object3D();
-let mixer;
-let head;
+let robot;
+let ready = false;
 
-//1: Dance, 3: Idle, 7: running, 11: walking (-1)
-function spawnRobot(callback) {
-// Load a glTF resource ../public/robot.glb
-    GLTFloader.load("./robot.glb", function (gltf) {
-            robot = gltf.scene;
-            animations = gltf.animations;
-            robot.position.set(0, 0, 0);
-            robot.scale.set(0.25, 0.25, 0.25);
-            let box = new THREE.Box3().setFromObject(robot, false);
-            let size = new THREE.Vector3();
-            box.getSize(size);
-            scene.add(robot);
-            robot.traverse((child) => {
-                if (child.name === "Head") {
-                        head = child;
-                }
-            });
-            // Create an AnimationMixer and play the animations
-            mixer = new THREE.AnimationMixer(robot);
-            mixer.clipAction(animations[2]).play();
-            if (callback) callback(robot, mixer, head);
-        }, // called while loading is progressing
-        function (xhr) {
-            //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-        }, // called when loading has errors
-        function (error) {
-            console.log(error);
-        });
-    return robot;
-}
+GLTFloader.load("./robot.glb", function (gltf) {
+    //console.log(gltf);
+        robot = gltf.scene;
+        animations = gltf.animations;
+        robot.position.set(0, -10, 0);
+        robot.scale.set(0.25, 0.25, 0.25);
+        scene.add(robot);
+        //console.log("robot loaded");
+        client.emit('player ready');
+    },
+    function ( xhr) {
+        if (xhr.loaded / xhr.total * 100 === 100) {
+            //console.log("xhr");
+        }
+    }, // called when loading has errors
+    function (error) {
+        console.log(error);
+    }
+);
 
-const cellSize = 5;
 let grid = {};
 
 let planeMesh = new THREE.Mesh();
@@ -224,21 +219,16 @@ planeMesh.material = new THREE.MeshStandardMaterial({
 })
 planeMesh.material.color.setHex( 0xcccccc );
 */
-//addToGrid(planeMesh, grid, cellSize);
-setObjectCells(planeMesh, grid, cellSize);
+//addToGrid(planeMesh, grid, constant.cellSize);
+setObjectCells(planeMesh, grid, constant.cellSize);
 
-const loader = new Rhino3dmLoader();
-loader.setLibraryPath("https://cdn.jsdelivr.net/npm/rhino3dm@8.4.0/");
-
-let scale = 0.0013;
-
+const loader = new Rhino3dmLoader().setLibraryPath("https://cdn.jsdelivr.net/npm/rhino3dm@8.4.0/");
 
 loader.load("/baken.3dm", function (object) {
         object.rotation.x = -Math.PI / 2; // rotate the model
-        object.scale.set(scale, scale, scale);
-        object.position.z = -5;
-        object.name="baken";
-        //object.position.y = -10;
+        object.scale.set(constant.scale, constant.scale, constant.scale);
+        object.position.z = -20;
+        object.name = "baken";
         scene.add(object);
         let box = new THREE.Box3().setFromObject(object, false);
         let center = new THREE.Vector3();
@@ -254,11 +244,11 @@ loader.load("/baken.3dm", function (object) {
                 child.castShadow = true;
                 if (child.material.name === "Paint") {
                     child.name = "Stairs";
-                    setObjectCells(child, grid, cellSize);
+                    setObjectCells(child, grid, constant.cellSize);
 
                 }else{
                     child.name = "Wall";
-                    setObjectCells(child, grid, cellSize);
+                    setObjectCells(child, grid, constant.cellSize);
                 }
 
             }
@@ -276,7 +266,7 @@ loader.load("/baken.3dm", function (object) {
 loader.load("land.3dm", function (object) {
     //object.rotation.x = -Math.PI / 2; // rotate the model
     //object.position.y = 50;
-    //object.scale.set(scale, scale, 0.008);
+    //object.scale.set(constant.scale, constant.scale, 0.008);
     let box = new THREE.Box3().setFromObject(object, false);
     let center = new THREE.Vector3();
     box.getCenter(center);
@@ -292,7 +282,7 @@ loader.load("land.3dm", function (object) {
             if (i === 1) {
                 child.rotation.x = -Math.PI / 2; // rotate the model
                 child.position.y = 0;
-                child.scale.set(scale, scale, scale);
+                child.scale.set(constant.scale, constant.scale, constant.scale);
                 scene.add(child);
 
             }
@@ -312,7 +302,7 @@ loader.load(
     function (object) {
         object.rotation.x = -Math.PI / 2; // rotate the model
 
-        object.scale.set(scale);
+        object.scale.set(constant.scale);
         object.position.x = 150;
         let i = 0;
         scene.add(object);
@@ -341,7 +331,7 @@ loader.load(
     "byReduced.3dm",
     function (object) {
         object.rotation.x = -Math.PI / 2; // rotate the model
-        object.scale.set(scale);
+        object.scale.set(constant.scale);
         object.position.x = -200;
         object.position.y = 0;
         scene.add(object);
@@ -402,14 +392,16 @@ document.addEventListener("mousemove", (e) => {
         phi += -xh;
         theta = clamp(theta - yh, -Math.PI / 2, Math.PI / 2);
 
-        qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi);
         qz = new THREE.Quaternion();
+        qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi);
         qz.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta);
 
         q = qx.multiply(qz);
 
         camera.quaternion.copy(q);
-        socket.emit('player rotation', {x: q.x, y: q.y, z: q.z, w: q.w});
+        if(ready){
+            client.emit('player rotation', {x: q.x, y: q.y, z: q.z, w: q.w});
+        }
     }
 });
 
@@ -483,7 +475,7 @@ function move(delta) {
         jumpHeight = 0.05;
         //camera.position.add(up);
         moving = true;
-        socket.emit('player jump');
+        client.emit('player jump');
     }
     if (downBool) {
         down.set(0, -speed, 0);
@@ -500,8 +492,8 @@ function move(delta) {
     //.log(rayCaster.ray.origin);
     floor(rayCaster);
 
-    if (moving) {
-        socket.emit('player position', {x: camera.position.x, y: camera.position.y, z: camera.position.z});
+    if (moving && ready) {
+        client.emit('player position', {x: camera.position.x, y: camera.position.y, z: camera.position.z});
     }
     if(!isJumping) moving = false;
 }
@@ -522,12 +514,12 @@ animate();
 function animate() {
     //loops the animate function
     requestAnimationFrame(animate);
+
     delta = clock.getDelta();
-    // Move the camera
     move(delta);
 
     runAnimations();
-    //console.log(getCellKey(camera.position, cellSize));
+    //console.log(getCellKey(camera.position, constant.cellSize));
 
     // Render three.js
     renderer.render(scene, camera);
@@ -544,14 +536,14 @@ function floor(rayCaster){
     //Find the closest distance to ray
     for(let i = 0; i < 7; i++) {
         //if (i === 0)
-        if (i === 1) currentCell.x += cellSize;
-        else if (i === 2) currentCell.x -= cellSize;
-        else if (i === 3) currentCell.y += cellSize;
-        else if (i === 4) currentCell.y -= cellSize;
-        else if (i === 5) currentCell.z += cellSize;
-        else if (i === 6) currentCell.z -= cellSize;
+        if (i === 1) currentCell.x += constant.cellSize;
+        else if (i === 2) currentCell.x -= constant.cellSize;
+        else if (i === 3) currentCell.y += constant.cellSize;
+        else if (i === 4) currentCell.y -= constant.cellSize;
+        else if (i === 5) currentCell.z += constant.cellSize;
+        else if (i === 6) currentCell.z -= constant.cellSize;
 
-        let cellObjects = getObjectsInCell(currentCell, grid, cellSize);
+        let cellObjects = getObjectsInCell(currentCell, grid, constant.cellSize);
 
         //if(i!==3) console.log(cellObjects.length);
         if (cellObjects.length > 0) {
@@ -572,7 +564,7 @@ function floor(rayCaster){
             }
         }
     }
-    if(isJumping && (modelHeight - distance) > 0) {
+    if(isJumping && (constant.modelHeight - distance) > 0) {
         isJumping = false;
         jumpHeight = 0;
     }else if(isJumping){
@@ -583,11 +575,11 @@ function floor(rayCaster){
     if(!isJumping){
         if(closestObject) {
 
-            if ((modelHeight - distance) > 0) {
+            if ((constant.modelHeight - distance) > 0) {
 
-                camera.position.y += (modelHeight - distance);
+                camera.position.y += (constant.modelHeight - distance);
             } else {
-                camera.position.y -= (distance - modelHeight);
+                camera.position.y -= (distance - constant.modelHeight);
             }
 
         }else {
@@ -613,16 +605,16 @@ function runAnimations() {
 }
 
 
-/*const nearbyWalkableObjects = getObjectsInNearbyCells(camera.position, grid, cellSize); // Use grid
+/*const nearbyWalkableObjects = getObjectsInNearbyCells(camera.position, grid, constant.cellSize); // Use grid
 const intersections = rayCaster.intersectObjects(nearbyWalkableObjects, true); // Perform raycast
 //console.log();
 if (intersections.length > 0) {
     const distance = intersections[0].distance;
 
     if (distance < maxStepHeight) {
-        camera.position.y += modelHeight - distance;
+        camera.position.y += constant.modelHeight - distance;
     } else {
-        camera.position.y = camera.position.y - (distance - modelHeight);
+        camera.position.y = camera.position.y - (distance - constant.modelHeight);
     }
 } else {
     camera.position.y -= 5; // Fallback for no intersection
