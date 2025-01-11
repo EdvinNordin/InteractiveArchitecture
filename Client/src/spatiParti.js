@@ -1,20 +1,20 @@
 import * as THREE from "three";
-
+import {cellSize} from "./constants.js";
 //CELLS
-export function getCellKey(position, cellSize) {
+export function getCellKey(position) {
 
     const x = cellStart(position.x, cellSize)/cellSize;//Math.floor(position.x / cellSize);
     const y = cellStart(position.y, cellSize)/cellSize;//Math.floor(position.y / cellSize);
     const z = cellStart(position.z, cellSize)/cellSize;//Math.floor(position.z / cellSize);
     return `${x},${y},${z}`; // Unique key for each grid cell
 }
-export function cellStart(value, cellSize) {
+export function cellStart(value) {
     return value - (value % cellSize);
 }
-function cellEnd(value, cellSize) {
+function cellEnd(value) {
     return value - (value % cellSize) + cellSize;
 }
-function createCell(pos, cellSize) {
+function createCell(pos) {
     let cellMinX = cellStart(pos.x, cellSize);
     let cellMaxX = cellEnd(pos.x, cellSize);
     let cellMinY = cellStart(pos.y, cellSize);
@@ -29,7 +29,7 @@ function createCell(pos, cellSize) {
 }
 
 //Check what cells the object created is in.
-export function setObjectCells(object, grid, cellSize) {
+export function setObjectCells(object, grid) {
 //Create Cell for each gridSize step
 
     let boundingBox = new THREE.Box3().setFromObject(object);
@@ -54,7 +54,7 @@ export function setObjectCells(object, grid, cellSize) {
     }
 }
 
-export function getObjectsInCell(position, grid, cellSize){
+export function getObjectsInCell(position, grid){
     //find player position cell
     let x = cellStart(position.x, cellSize);
     let y = cellStart(position.y, cellSize);

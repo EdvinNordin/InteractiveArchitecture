@@ -1,23 +1,23 @@
 import * as THREE from "three";
 import Stats from "three/examples/jsm/libs/stats.module.js";
+import nipplejs from "nipplejs";
 import {io} from "socket.io-client";
 
 import {camera, scene, renderer, composer} from "./setup.js";
 import {applyQuaternion, clamp, getYawRotation, getPitchRotation} from "./utils.js";
 import {setObjectCells, getObjectsInCell} from "./spatiParti.js";
 import * as constant from "./constants.js";
-
-import {Rhino3dmLoader} from "three/examples/jsm/loaders/3DMLoader.js";
-import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
+import * as loaders from "./loaders.js";
+import {socketFunctions, client} from "./socket.js";
 
 
 class Player {
     constructor(id) {
         this.id = id;
-        this.model = robot.clone(true);
-        this.modelHead = this.model.getObjectByName("Head");
+        this.model = wholeRobot[0].clone(true);
+        this.modelHead = wholeRobot[1].clone(true);//this.model.getObjectByName("Head");
         this.mixer = new THREE.AnimationMixer(this.model);
-        this.mixer.clipAction(animations[2]).play();
+        //this.mixer.clipAction(animations[2]).play();
         this.next = null;
         scene.add(this.model);
     }
@@ -103,12 +103,20 @@ class LinkedList {
     }
 }
 
-const playerList = new LinkedList();
 //// NETWORKING #####################################################################################
-const client = io.connect('https://interactivearchitecturebackend.onrender.com');
+
 //const client = io.connect('localhost:3000');
 
+let playerList = new LinkedList();
+let grid = {};
+let wholeRobot = [];
+let animations;
+loaders.loadModels(client, grid, wholeRobot);
+let ready = false;
 
+socketFunctions(client, playerList, ready);
+
+/*
 client.on('give list', (serverList) => {
     playerList.copy(serverList);
     ready = true;
@@ -168,221 +176,82 @@ client.on('update jump', (id) => {
 client.on('removePlayer', (id) => {
     playerList.remove(id);
 });
-
-// MODELS ##############################################################################
-const GLTFloader = new GLTFLoader();
-let animations;
-let robot;
-let ready = false;
-
-GLTFloader.load("./robot.glb", function (gltf) {
-    //console.log(gltf);
-        robot = gltf.scene;
-        animations = gltf.animations;
-        robot.position.set(0, -10, 0);
-        robot.scale.set(0.25, 0.25, 0.25);
-        scene.add(robot);
-        //console.log("robot loaded");
-        client.emit('player ready');
-    },
-    function ( xhr) {
-        if (xhr.loaded / xhr.total * 100 === 100) {
-            //console.log("xhr");
-        }
-    }, // called when loading has errors
-    function (error) {
-        console.log(error);
-    }
-);
-
-let grid = {};
-
-let planeMesh = new THREE.Mesh();
-planeMesh.geometry = new THREE.PlaneGeometry(1000, 1000, 1, 1);
-planeMesh.rotation.x = -Math.PI / 2;
-
-const texture = new THREE.TextureLoader().load("/stacked-stones.jpg");
-texture.wrapS = THREE.RepeatWrapping;
-texture.wrapT = THREE.RepeatWrapping;
-texture.repeat.set(50, 50);
-planeMesh.material = new THREE.MeshStandardMaterial({
-    map: texture,
-    side: THREE.FrontSide,
-});
-
-//planeMesh.position.set(1,1,1);
-planeMesh.name="plane";
-scene.add(planeMesh);
-planeMesh.position.set(0, 0, 0);
-/*
-planeMesh.material = new THREE.MeshStandardMaterial({
-})
-planeMesh.material.color.setHex( 0xcccccc );
-*/
-//addToGrid(planeMesh, grid, constant.cellSize);
-setObjectCells(planeMesh, grid, constant.cellSize);
-
-const loader = new Rhino3dmLoader().setLibraryPath("https://cdn.jsdelivr.net/npm/rhino3dm@8.4.0/");
-
-loader.load("/baken.3dm", function (object) {
-        object.rotation.x = -Math.PI / 2; // rotate the model
-        object.scale.set(constant.scale, constant.scale, constant.scale);
-        object.position.z = -20;
-        object.name = "baken";
-        scene.add(object);
-        let box = new THREE.Box3().setFromObject(object, false);
-        let center = new THREE.Vector3();
-        let boxSize = new THREE.Vector3();
-        box.getCenter(center);
-        box.getSize(boxSize);
-        object.position.y = 0;//-boxSize.y / 4;
-        object.traverse((child) => {
-            if (child.isMesh) {
-                child.material.metalness = 0;
-                child.material.side = 0;
-                child.recieveShadow = true;
-                child.castShadow = true;
-                if (child.material.name === "Paint") {
-                    child.name = "Stairs";
-                    setObjectCells(child, grid, constant.cellSize);
-
-                }else{
-                    child.name = "Wall";
-                    setObjectCells(child, grid, constant.cellSize);
-                }
-
-            }
-        });
-    },
-    function (progress) {
-        //console.log((progress.loaded / progress.total) * 100 + "%");
-    },
-    function (error) {
-        console.log(error);
-    }
-);
-
-/*
-loader.load("land.3dm", function (object) {
-    //object.rotation.x = -Math.PI / 2; // rotate the model
-    //object.position.y = 50;
-    //object.scale.set(constant.scale, constant.scale, 0.008);
-    let box = new THREE.Box3().setFromObject(object, false);
-    let center = new THREE.Vector3();
-    box.getCenter(center);
-    let i = 1;
-    object.traverse((child) => {
-        if (child.isMesh) {
-            child.material.metalness = 0;
-            child.material.side = 0;
-            child.recieveShadow = true;
-            child.castShadow = true;
-            child.material.wireframe = false;
-            //console.log(child);
-            if (i === 1) {
-                child.rotation.x = -Math.PI / 2; // rotate the model
-                child.position.y = 0;
-                child.scale.set(constant.scale, constant.scale, constant.scale);
-                scene.add(child);
-
-            }
-            i++;
-        }
-    });
-}, function (progress) {
-    //console.log((progress.loaded / progress.total) * 100 + "%");
-}, function (error) {
-    console.log(error);
-});
 */
 
-/*
-loader.load(
-    "net.3dm",
-    function (object) {
-        object.rotation.x = -Math.PI / 2; // rotate the model
-
-        object.scale.set(constant.scale);
-        object.position.x = 150;
-        let i = 0;
-        scene.add(object);
-
-        object.traverse((child) => {
-            if (child.isMesh) {
-                i++;
-                child.material.metalness = 0;
-                child.material.side = 2;
-                child.recieveShadow = true;
-                child.castShadow = true;
-            }
-        });
-        //console.log(i);
-    },
-    function (progress) {
-        //console.log((progress.loaded / progress.total) * 100 + "%");
-    },
-    function (error) {
-        console.log(error);
-    }
-);
-*/
-/*
-loader.load(
-    "byReduced.3dm",
-    function (object) {
-        object.rotation.x = -Math.PI / 2; // rotate the model
-        object.scale.set(constant.scale);
-        object.position.x = -200;
-        object.position.y = 0;
-        scene.add(object);
-        /*let box = new THREE.Box3().setFromObject(object, false);
-        let center = new THREE.Vector3();
-        box.getCenter(center);
-        let i = 0;
-
-        object.traverse((child) => {
-            if (child.isMesh) {
-                child.material.metalness = 0;
-                child.material.side = 0;
-                child.recieveShadow = true;
-                child.castShadow = true;
-
-            }
-        });
-        //console.log(i);
-    },
-    function (progress) {
-        //console.log((progress.loaded / progress.total) * 100 + "%");
-    },
-    function (error) {
-        console.log(error);
-    }
-);*/
+let check = false;
+(function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
+let mobile = check;
 
 // POINTER LOCK ##########################################################################
 
 const instructions = document.getElementById("instructions");
+if(!mobile) {
+    document.body.onclick = () => {
+        if (document.pointerLockElement !== document.body) {
+            document.body.requestPointerLock();
+        }
+    };
 
-document.body.onclick = () => {
-    if (document.pointerLockElement !== document.body) {
-        document.body.requestPointerLock();
-    }
-};
+    document.addEventListener("pointerlockchange", (e) => {
+        if (document.pointerLockElement === document.body) {
+            instructions.style.display = "none";
+        } else {
+            instructions.style.display = "";
+        }
+    });
+}
 
-document.addEventListener("pointerlockchange", (e) => {
-    if (document.pointerLockElement === document.body) {
-        instructions.style.display = "none";
-    } else {
-        instructions.style.display = "";
-    }
-});
+/*
+var joystick = nipplejs.create({
+    zone: document.getElementById('joystick'),
+    mode: 'static',
+    position: { left: '15%', top: '70%' },
+    color: 'green',
+    size: 200
+});*/
 
-// CAMERA ######################################################################
+//check if mobile
 
 let phi = 0, theta = 0;
 let q = new THREE.Quaternion(), qx = new THREE.Quaternion(), qz = new THREE.Quaternion();
 q.set(0, 0, 0, 1);
+const touchControls = false;
+let previousTouch;
 
+document.getElementById('right').addEventListener("touchstart", (e) => {
+    // Clear any previous touch to start fresh
+    previousTouch = e.touches[0];
+});
+
+document.getElementById('right').addEventListener("touchmove", (e) => {
+    const touch = e.touches[0];
+    if(previousTouch) {
+
+        // be aware that these only store the movement of the first touch in the touches array
+        const xAmount = touch.pageX - previousTouch.pageX;
+        const yAmount = touch.pageY - previousTouch.pageY;
+
+
+        const xh = xAmount * 0.005;
+        const yh = yAmount * 0.005;
+
+        phi += -xh;
+        theta = clamp(theta - yh, -Math.PI / 2, Math.PI / 2);
+
+        qz = new THREE.Quaternion();
+        qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi);
+        qz.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta);
+
+        q = qx.multiply(qz);
+
+        camera.quaternion.copy(q);
+        if (ready) {
+            client.emit('player rotation', {x: q.x, y: q.y, z: q.z, w: q.w});
+        }
+    }
+
+    previousTouch = touch;
+})
 
 document.addEventListener("mousemove", (e) => {
     if (document.pointerLockElement === document.body) {
@@ -407,7 +276,40 @@ document.addEventListener("mousemove", (e) => {
 
 // MOVEMENT ######################################################################
 
-let forwardBool, backwardBool, leftBool, rightBool, upBool, downBool, moving = false;
+
+
+
+let forwardBool, backwardBool, leftBool, rightBool, upBool, moving = false;
+
+let mobileMovement = new THREE.Vector3(0,0,0);
+let inputAmount = 0;
+if(mobile) {
+
+    let joystickL = nipplejs.create({
+        zone: document.getElementById('joystick'),
+        mode: 'static',
+        position: { left: '10%', top: '80%' },
+        restJoystick: true,
+    });
+
+    joystickL[0].on('start', (evt, data) => {
+        inputAmount++;
+    })
+    joystickL[0].on('move', (evt, data) => {
+        let xDir = data.vector.x;
+        let zDir = -data.vector.y;
+        let dir = new THREE.Vector3(xDir*0.1, 0, zDir*0.1);
+        //camera.position.z += 0.005;
+        mobileMovement = applyQuaternion(dir, qx);
+        moving = true;
+        //camera.position.add(movement);
+    })
+
+    joystickL[0].on('end', (evt, data) => {
+        inputAmount--;
+        mobileMovement.set(0,0,0);
+    })
+}
 
 document.addEventListener("keydown", (e) => {
     if (document.pointerLockElement === document.body) {
@@ -416,80 +318,69 @@ document.addEventListener("keydown", (e) => {
         if (e.key === "a" || e.key === "ArrowLeft") leftBool = true;
         if (e.key === "d" || e.key === "ArrowRight") rightBool = true;
         if (e.key === " ") upBool = true;
-        if (e.key === "Shift") console.log('%c ', 'font-size:400px; background:url(https://pics.me.me/codeit-google-until-youfinda-stackoverflow-answerwith-code-to-copy-paste-34126823.png) no-repeat;');//downBool = true;
 
     }
 });
 
 document.addEventListener("keyup", (e) => {
+
     if (e.key === "w" || e.key === "ArrowUp") forwardBool = false;
     if (e.key === "s" || e.key === "ArrowDown") backwardBool = false;
     if (e.key === "a" || e.key === "ArrowLeft") leftBool = false;
     if (e.key === "d" || e.key === "ArrowRight") rightBool = false;
     if (e.key === " ") upBool = false;
-    if (e.key === "Shift") downBool = false;
 });
 
 function move(delta) {
-    let speed = 5 * delta;
-    let movement;
-    let inputAmount = 0;
-    let forward = new THREE.Vector3(0,0,0), backward = new THREE.Vector3(0,0,0), left = new THREE.Vector3(0,0,0), right = new THREE.Vector3(0,0,0), up = new THREE.Vector3(0,0,0), down = new THREE.Vector3(0,0,0);
+    if (mobile) {
+        camera.position.add(mobileMovement);
+    }else{
+        let movement = new THREE.Vector3(0, 0, 0);
+        let speed = 5 * delta;
+        inputAmount = 0;
 
-    if (forwardBool) {
-        forward.set(0,0,-speed);// = new THREE.Vector3(0, 0, -speed);
-        forward = applyQuaternion(forward, qx);
-        forward.y = 0;
-        //camera.position.add(movement);
-        moving = true;
-        inputAmount++;
-    }
-    if (backwardBool) {
-        backward.set(0, 0, speed);
-        backward = applyQuaternion(backward, qx);
-        backward.y = 0;
-        //camera.position.add(movement);
-        moving = true;
-        inputAmount++;
-    }
-    if (leftBool) {
-        left.set(-speed, 0, 0);
-        left = applyQuaternion(left, qx);
-        left.y = 0;
-        //camera.position.add(movement);
-        moving = true;
-        inputAmount++;
-    }
-    if (rightBool) {
-        right.set(speed, 0, 0);
-        right = applyQuaternion(right, qx);
-        right.y = 0;
-        //camera.position.add(movement);
-        moving = true;
-        inputAmount++;
-    }
-    if (upBool && !isJumping) {
-        //up.set(0, speed, 0);
-        //up = applyQuaternion(up, qx);
-        isJumping = true;
-        jumpHeight = 0.05;
-        //camera.position.add(up);
-        moving = true;
-        client.emit('player jump');
-    }
-    if (downBool) {
-        down.set(0, -speed, 0);
-        //down = applyQuaternion(down, qx);
-        //camera.position.add(down);
-        //moving = true;
-    }
-    if(inputAmount > 0){
-        let totDir = forward.add(backward.add(left.add(right)));
-        movement = totDir.divideScalar(Math.sqrt(inputAmount)); //
-        camera.position.add(movement);
-    }
+        let forward = new THREE.Vector3(0,0,0), backward = new THREE.Vector3(0,0,0), left = new THREE.Vector3(0,0,0), right = new THREE.Vector3(0,0,0), up = new THREE.Vector3(0,0,0), down = new THREE.Vector3(0,0,0);
 
-    //.log(rayCaster.ray.origin);
+        if (forwardBool) {
+            forward.set(0,0,-speed);// = new THREE.Vector3(0, 0, -speed);
+            forward = applyQuaternion(forward, qx);
+            forward.y = 0;
+            moving = true;
+            inputAmount++;
+        }
+        if (backwardBool) {
+            backward.set(0, 0, speed);
+            backward = applyQuaternion(backward, qx);
+            backward.y = 0;
+            moving = true;
+            inputAmount++;
+        }
+        if (leftBool) {
+            left.set(-speed, 0, 0);
+            left = applyQuaternion(left, qx);
+            left.y = 0;
+            moving = true;
+            inputAmount++;
+        }
+        if (rightBool) {
+            right.set(speed, 0, 0);
+            right = applyQuaternion(right, qx);
+            right.y = 0;
+            moving = true;
+            inputAmount++;
+        }
+        if (upBool && !isJumping) {
+            isJumping = true;
+            jumpHeight = 0.05;
+            moving = true;
+            client.emit('player jump');
+        }
+        if(inputAmount > 0) {
+            let totDir = forward.add(backward.add(left.add(right)));
+            movement = totDir.divideScalar(Math.sqrt(inputAmount));
+            camera.position.add(movement);
+        }
+    }
     floor(rayCaster);
 
     if (moving && ready) {
@@ -497,6 +388,7 @@ function move(delta) {
     }
     if(!isJumping) moving = false;
 }
+
 let rayStart = (camera.position);//new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
 
 const direction = new THREE.Vector3(0, -1, 0);
@@ -518,7 +410,7 @@ function animate() {
     delta = clock.getDelta();
     move(delta);
 
-    runAnimations();
+    //runAnimations();
     //console.log(getCellKey(camera.position, constant.cellSize));
 
     // Render three.js

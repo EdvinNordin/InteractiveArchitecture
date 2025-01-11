@@ -79,7 +79,7 @@ class LinkedList {
 let Players = new LinkedList();
 
 io.on('connection', (socket) => {
-    //console.log(socket.id + ' has connected');
+    console.log(socket.id + ' has connected');
 
     socket.on('player ready', () => {
         //console.log(socket.id + ' is ready');
