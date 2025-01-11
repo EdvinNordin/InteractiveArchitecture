@@ -199,6 +199,10 @@ if(!mobile) {
             instructions.style.display = "";
         }
     });
+}else{
+
+        instructions.style.display = "none";
+
 }
 
 /*
@@ -215,7 +219,6 @@ var joystick = nipplejs.create({
 let phi = 0, theta = 0;
 let q = new THREE.Quaternion(), qx = new THREE.Quaternion(), qz = new THREE.Quaternion();
 q.set(0, 0, 0, 1);
-const touchControls = false;
 let previousTouch;
 
 document.getElementById('right').addEventListener("touchstart", (e) => {
