@@ -280,8 +280,6 @@ document.addEventListener("mousemove", (e) => {
 // MOVEMENT ######################################################################
 
 
-
-
 let forwardBool, backwardBool, leftBool, rightBool, upBool, moving = false;
 
 let mobileMovement = new THREE.Vector3(0,0,0);
