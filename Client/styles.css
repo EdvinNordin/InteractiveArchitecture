@@ -26,3 +26,27 @@
     height: 100%;
     width: 100%;
 }
+#joystick{
+    z-index: 100;
+}
+#jumpButton {
+    position: absolute;
+    top: 50%;
+    left: 85%;
+    height: 100px;
+    width: 100px;
+    border-radius: 100%;
+    background-color: rgba(255,255,255,0.3);;
+    z-index: 100;
+
+    /* Centering text with Flexbox */
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+
+    /* Optional text styling for better appearance */
+    text-align: center;
+    font-size: 180%;
+    font-weight: bold;
+    color: White;
+}

@@ -226,6 +226,15 @@ document.getElementById('right').addEventListener("touchstart", (e) => {
     previousTouch = e.touches[0];
 });
 
+document.getElementById('jumpButton').addEventListener("touchstart", (e) => {
+    // Clear any previous touch to start fresh
+    console.log("jump");
+    isJumping = true;
+    jumpHeight = 0.05;
+    moving = true;
+    client.emit('player jump');
+});
+
 document.getElementById('right').addEventListener("touchmove", (e) => {
     const touch = e.touches[0];
     if(previousTouch) {
