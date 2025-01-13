@@ -1,7 +1,5 @@
 import * as THREE from "three"; //"https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js";
-
 import { Sky } from "./sky.js";
-
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { SAOPass } from "three/examples/jsm/postprocessing/SAOPass.js";
@@ -14,6 +12,7 @@ let sky, sun, composer, renderPass, saoPass;
 
 const scene = new THREE.Scene();
 
+//Renderer setup
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -21,6 +20,8 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+
+//Camera setup
 let camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
@@ -29,6 +30,8 @@ let camera = new THREE.PerspectiveCamera(
 );
 camera.position.set(randX, 0.9, randZ);
 
+
+//Light setup
 let dirLight = new THREE.DirectionalLight(0xffffff, 1);
 dirLight.castShadow = true;
 dirLight.shadow.camera.top = 50;
@@ -37,8 +40,6 @@ dirLight.shadow.camera.left = -50;
 dirLight.shadow.camera.right = 50;
 dirLight.shadow.bias = -0.0001;
 scene.add(dirLight);
-//const helper = new THREE.DirectionalLightHelper(dirLight, 1);
-//scene.add(helper);
 
 const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.2);
 hemiLight.color.setHSL(0.6, 1, 0.6);
@@ -48,6 +49,8 @@ scene.add(hemiLight);
 
 let ambientLight = new THREE.AmbientLight(0x404040);
 //scene.add(ambientLight);
+
+
 
 window.addEventListener("resize", onWindowResize);
 

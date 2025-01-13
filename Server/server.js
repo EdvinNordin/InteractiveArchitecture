@@ -25,7 +25,6 @@ server.listen(PORT, () => {
 class Player  {
     constructor(id) {
         this.id = id;
-        this.ready = false;
         this.next = null;
     }
 }
@@ -49,6 +48,7 @@ class LinkedList {
                 current = current.next;
             }
             current.next = player;
+            current.next.next = null;
         }
         this.size++;
     }
@@ -74,18 +74,28 @@ class LinkedList {
             current = current.next;
         }
     }
+
+    print() {
+        let current = this.head;
+        while (current != null) {
+            console.log(current.id);
+            current = current.next;
+        }
+    }
 }
 
 let Players = new LinkedList();
 
 io.on('connection', (socket) => {
-    console.log(socket.id + ' has connected');
+    //console.log(socket.id + ' has connected');
 
     socket.on('player ready', () => {
+
         //console.log(socket.id + ' is ready');
-        socket.emit('give list', Players);
+        socket.emit('transfer list', Players);
         Players.add(socket.id);
         socket.broadcast.emit('new player', socket.id);
+        //Players.print();
         //console.log(Players.size);
     });
 

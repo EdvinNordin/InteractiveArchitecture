@@ -8,16 +8,15 @@ import {applyQuaternion, clamp, getYawRotation, getPitchRotation} from "./utils.
 import {setObjectCells, getObjectsInCell} from "./spatiParti.js";
 import * as constant from "./constants.js";
 import * as loaders from "./loaders.js";
-import {socketFunctions, client} from "./socket.js";
 
 
 class Player {
     constructor(id) {
         this.id = id;
         this.model = wholeRobot[0].clone(true);
-        this.modelHead = wholeRobot[1].clone(true);//this.model.getObjectByName("Head");
-        this.mixer = new THREE.AnimationMixer(this.model);
-        //this.mixer.clipAction(animations[2]).play();
+        this.modelHead = this.model.getObjectByName("Head");
+        /*this.mixer = wholeRobot[1];
+        this.mixer.clipAction(animations[2]).play();*/
         this.next = null;
         scene.add(this.model);
     }
@@ -91,7 +90,6 @@ class LinkedList {
             this.add(current.id);
             current = current.next;
         }
-        //test
     }
 
     print() {
@@ -103,25 +101,21 @@ class LinkedList {
     }
 }
 
-//// NETWORKING #####################################################################################
-
-//const client = io.connect('localhost:3000');
-
 let playerList = new LinkedList();
 let grid = {};
 let wholeRobot = [];
 let animations;
-loaders.loadModels(client, grid, wholeRobot);
 let ready = false;
 
-socketFunctions(client, playerList, ready);
+const client = io.connect('https://interactivearchitecturebackend.onrender.com');
+//const client = io.connect('localhost:3000');
 
-/*
-client.on('give list', (serverList) => {
+loaders.loadModels(client, grid, wholeRobot);
+
+client.on('transfer list', (serverList) => {
     playerList.copy(serverList);
     ready = true;
 });
-
 
 client.on('new player', (id) => {
     playerList.add(id);
@@ -134,11 +128,8 @@ client.on('set state', (pos, rot, id) => {
     let player = playerList.find(id);
     player.model.position.set(pos.x, pos.y - constant.modelHeight, pos.z);
 
-    //player.model.quaternion.set(rot);
-    //player.modelHead.quaternion.set(rot);
-
-    player.model.quaternion.copy(getYawRotation(rot));
-    player.modelHead.quaternion.copy(getPitchRotation(rot));
+    //player.model.quaternion.copy(getYawRotation(rot));
+    //player.modelHead.quaternion.copy(getPitchRotation(rot));
 })
 
 client.on('update position', (pos, id) => {
@@ -146,13 +137,13 @@ client.on('update position', (pos, id) => {
         const player = playerList.find(id);
         player.model.position.set(pos.x, pos.y - constant.modelHeight, pos.z);
 
-        if (player.mixer.clipAction(animations[2]).isRunning() && !player.mixer.clipAction(animations[3]).isRunning()) {
+        /*if (player.mixer.clipAction(animations[2]).isRunning() && !player.mixer.clipAction(animations[3]).isRunning()) {
             player.mixer.clipAction(animations[2]).stop();
             player.mixer.clipAction(animations[10]).play();
-        }
+        }*/
     }
 });
-//0.09381591630267129, -0.4675207063025343, 0.04998006037269623, 0.8775676364769904
+
 client.on('update rotation', (rot, id) => {
     if(ready) {
         const player = playerList.find(id);
@@ -166,17 +157,16 @@ client.on('update rotation', (rot, id) => {
 client.on('update jump', (id) => {
     if(ready) {
         const player = playerList.find(id);
-        player.mixer.clipAction(animations[10]).stop();
+        //player.model.position.set(pos.x, pos.y - constant.modelHeight, pos.z);
+        /*player.mixer.clipAction(animations[10]).stop();
         player.mixer.clipAction(animations[2]).stop();
-        player.mixer.clipAction(animations[3]).play();
+        player.mixer.clipAction(animations[3]).play();*/
     }
 })
-
 
 client.on('removePlayer', (id) => {
     playerList.remove(id);
 });
-*/
 
 let check = false;
 (function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
@@ -186,6 +176,7 @@ let mobile = check;
 
 const instructions = document.getElementById("instructions");
 if(!mobile) {
+    document.getElementById("jumpButton").style.display = "none";
     document.body.onclick = () => {
         if (document.pointerLockElement !== document.body) {
             document.body.requestPointerLock();
@@ -200,21 +191,8 @@ if(!mobile) {
         }
     });
 }else{
-
         instructions.style.display = "none";
-
 }
-
-/*
-var joystick = nipplejs.create({
-    zone: document.getElementById('joystick'),
-    mode: 'static',
-    position: { left: '15%', top: '70%' },
-    color: 'green',
-    size: 200
-});*/
-
-//check if mobile
 
 let phi = 0, theta = 0;
 let q = new THREE.Quaternion(), qx = new THREE.Quaternion(), qz = new THREE.Quaternion();
@@ -222,20 +200,31 @@ q.set(0, 0, 0, 1);
 let previousTouch;
 
 document.getElementById('right').addEventListener("touchstart", (e) => {
-    // Clear any previous touch to start fresh
     previousTouch = e.touches[0];
 });
 
 document.getElementById('jumpButton').addEventListener("touchstart", (e) => {
-    // Clear any previous touch to start fresh
-    console.log("jump");
-    isJumping = true;
-    jumpHeight = 0.05;
-    moving = true;
-    client.emit('player jump');
+    if (!isJumping){
+        isJumping = true;
+        jumpHeight = 0.05;
+        moving = true;
+        client.emit('player jump', camera.position);
+        // Ensure `requestFullscreen` is called directly within this event handler
+        /*if(!document.fullscreen) {
+            document.documentElement.requestFullscreen().then(() => {
+                console.log("Fullscreen mode activated");
+            }).catch((err) => {
+                console.log("Failed to activate fullscreen mode:", err.message);
+            });
+        }else{
+            document.documentElement.exitFullscreen();
+        }*/
+    }
 });
 
+
 document.getElementById('right').addEventListener("touchmove", (e) => {
+
     const touch = e.touches[0];
     if(previousTouch) {
 
@@ -267,6 +256,7 @@ document.getElementById('right').addEventListener("touchmove", (e) => {
 
 document.addEventListener("mousemove", (e) => {
     if (document.pointerLockElement === document.body) {
+
         const xh = e.movementX * 0.001;
         const yh = e.movementY * 0.001;
 
@@ -303,21 +293,20 @@ if(mobile) {
     });
 
     joystickL[0].on('start', (evt, data) => {
-        inputAmount++;
+        //inputAmount++;
     })
     joystickL[0].on('move', (evt, data) => {
         let xDir = data.vector.x;
         let zDir = -data.vector.y;
-        let dir = new THREE.Vector3(xDir*0.1, 0, zDir*0.1);
-        //camera.position.z += 0.005;
+        let dir = new THREE.Vector3(xDir*0.05, 0, zDir*0.05);
         mobileMovement = applyQuaternion(dir, qx);
         moving = true;
-        //camera.position.add(movement);
     })
 
     joystickL[0].on('end', (evt, data) => {
-        inputAmount--;
+        //inputAmount--;
         mobileMovement.set(0,0,0);
+        moving = false;
     })
 }
 
@@ -342,9 +331,12 @@ document.addEventListener("keyup", (e) => {
 });
 
 function move(delta) {
-    if (mobile) {
+
+    if (mobile && ready) {
         camera.position.add(mobileMovement);
-    }else{
+        //client.emit('player position', {x: camera.position.x, y: camera.position.y, z: camera.position.z});
+    }
+    else{
         let movement = new THREE.Vector3(0, 0, 0);
         let speed = 5 * delta;
         inputAmount = 0;
@@ -383,7 +375,7 @@ function move(delta) {
             isJumping = true;
             jumpHeight = 0.05;
             moving = true;
-            client.emit('player jump');
+            client.emit('player jump', camera.position);
         }
         if(inputAmount > 0) {
             let totDir = forward.add(backward.add(left.add(right)));
@@ -391,12 +383,13 @@ function move(delta) {
             camera.position.add(movement);
         }
     }
+
     floor(rayCaster);
 
     if (moving && ready) {
         client.emit('player position', {x: camera.position.x, y: camera.position.y, z: camera.position.z});
     }
-    if(!isJumping) moving = false;
+    if(!isJumping && !mobile) moving = false;
 }
 
 let rayStart = (camera.position);//new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
@@ -421,7 +414,6 @@ function animate() {
     move(delta);
 
     //runAnimations();
-    //console.log(getCellKey(camera.position, constant.cellSize));
 
     // Render three.js
     renderer.render(scene, camera);
@@ -505,19 +497,3 @@ function runAnimations() {
         current = current.next;
     }
 }
-
-
-/*const nearbyWalkableObjects = getObjectsInNearbyCells(camera.position, grid, constant.cellSize); // Use grid
-const intersections = rayCaster.intersectObjects(nearbyWalkableObjects, true); // Perform raycast
-//console.log();
-if (intersections.length > 0) {
-    const distance = intersections[0].distance;
-
-    if (distance < maxStepHeight) {
-        camera.position.y += constant.modelHeight - distance;
-    } else {
-        camera.position.y = camera.position.y - (distance - constant.modelHeight);
-    }
-} else {
-    camera.position.y -= 5; // Fallback for no intersection
-}*/

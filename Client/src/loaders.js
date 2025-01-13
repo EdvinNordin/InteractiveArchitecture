@@ -5,23 +5,24 @@ import {setObjectCells} from "./spatiParti.js";
 import * as constant from "./constants.js";
 import {Rhino3dmLoader} from "three/addons/loaders/3DMLoader.js";
 
+
 export function loadModels(client, grid, wholeRobot)
 {
-    const GLTFloader = new GLTFLoader();
-
-    GLTFloader.load("./robot.glb", function (gltf) {
+    //const GLTFloader = new GLTFLoader();
+    new GLTFLoader().load("./robot.glb", function (gltf) {
             //console.log(gltf);
             let robot = gltf.scene;
-            //animations = gltf.animations;
+            let animations = gltf.animations;
             robot.position.set(0, -10, 0);
             robot.scale.set(0.25, 0.25, 0.25);
-            //scene.add(robot);
+            scene.add(robot);
             wholeRobot.push(robot);
-            robot.traverseVisible((child) => {
-                if (child.name === "Head_1") {
-                    wholeRobot.push(child);
+
+            /*robot.traverseVisible((child) => {
+                if (child.name === "Head") {
+                    wholeRobot.push(robot);
                 }
-            })
+            })*/
             //console.log("robot loaded");
             client.emit('player ready');
         },
@@ -34,7 +35,6 @@ export function loadModels(client, grid, wholeRobot)
             console.log(error);
         }
     );
-
 
     let planeMesh = new THREE.Mesh();
     planeMesh.geometry = new THREE.PlaneGeometry(100, 100, 1, 1);
