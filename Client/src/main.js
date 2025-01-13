@@ -174,17 +174,15 @@ let mobile = check;
 
 // POINTER LOCK ##########################################################################
 
-
 document.getElementById('fullscreenButton').addEventListener('click', () => {
     if (screenfull.isEnabled) {
         screenfull.toggle();
-    } else {
-        // Ignore or do something else
     }
 });
 const instructions = document.getElementById("instructions");
 if(!mobile) {
     document.getElementById("jumpButton").style.display = "none";
+    document.getElementById("fullscreenButton").style.display = "none";
     document.body.onclick = () => {
         if (document.pointerLockElement !== document.body) {
             document.body.requestPointerLock();
