@@ -8,7 +8,7 @@ import {applyQuaternion, clamp, getYawRotation, getPitchRotation} from "./utils.
 import {setObjectCells, getObjectsInCell} from "./spatiParti.js";
 import * as constant from "./constants.js";
 import * as loaders from "./loaders.js";
-
+import screenfull from 'screenfull';
 
 class Player {
     constructor(id) {
@@ -174,6 +174,14 @@ let mobile = check;
 
 // POINTER LOCK ##########################################################################
 
+
+document.getElementById('fullscreenButton').addEventListener('click', () => {
+    if (screenfull.isEnabled) {
+        screenfull.toggle();
+    } else {
+        // Ignore or do something else
+    }
+});
 const instructions = document.getElementById("instructions");
 if(!mobile) {
     document.getElementById("jumpButton").style.display = "none";

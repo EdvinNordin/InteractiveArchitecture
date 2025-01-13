@@ -36,7 +36,8 @@
     height: 100px;
     width: 100px;
     border-radius: 100%;
-    background-color: rgba(255,255,255,0.3);;
+    border: 3px solid black;
+    background-color: rgba(255,255,255,0.3);
     z-index: 100;
 
     /* Centering text with Flexbox */
@@ -49,4 +50,40 @@
     font-size: 180%;
     font-weight: bold;
     color: White;
+}
+
+#jumpIMG{
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    text-align: center;
+    height: 60%;
+    width: 60%;
+    transform: scaleX(-1);
+}
+#fullscreenButton{
+    position: absolute;
+    top: 93%;
+    left: 95%;
+    height: 5%;
+    width: 5%;
+    z-index: 100;
+    /* Centering text with Flexbox */
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+
+    /* Optional text styling for better appearance */
+    text-align: center;
+    font-size: 180%;
+    font-weight: bold;
+    color: White;
+}
+#fullscreenIMG{
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    text-align: center;
+    height: 100%;
+    width: 100%;
 }
