@@ -26,6 +26,7 @@ class Player {
     }
 }
 
+
 class LinkedList {
     constructor() {
         this.head = null;
@@ -231,6 +232,7 @@ document.getElementById('jumpButton').addEventListener("touchstart", (e) => {
 
 document.getElementById('right').addEventListener("touchmove", (e) => {
 
+    console.log(e)
     const touch = e.touches[0];
     if(previousTouch) {
 
