@@ -109,8 +109,8 @@ let wholeRobot = [];
 let animations;
 let ready = false;
 
-//const client = io.connect('https://interactivearchitecturebackend.onrender.com');
-const client = io.connect('localhost:3000');
+const client = io.connect('https://interactivearchitecturebackend.onrender.com');
+//const client = io.connect('localhost:3000');
 
 loaders.loadModels(client, floorGrid, wallGrid, wholeRobot);
 
