@@ -87,16 +87,14 @@ class LinkedList {
 let Players = new LinkedList();
 
 io.on('connection', (socket) => {
-    //console.log(socket.id + ' has connected');
+    console.log(socket.id + ' has connected');
 
     socket.on('player ready', () => {
 
-        //console.log(socket.id + ' is ready');
         socket.emit('transfer list', Players);
         Players.add(socket.id);
         socket.broadcast.emit('new player', socket.id);
-        //Players.print();
-        //console.log(Players.size);
+        console.log("There are now " + Players.size + " players in the game");
     });
 
     socket.on('give state', (pos, rot, sender) => {
@@ -120,6 +118,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
       Players.remove(socket.id);
       socket.broadcast.emit('removePlayer', socket.id);
-      //console.log(socket.id + ' has disconnected');
+      console.log(socket.id + ' has disconnected');
+      console.log("There are now " + Players.size + " players in the game");
     });
 });
