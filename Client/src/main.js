@@ -103,15 +103,16 @@ class LinkedList {
 }
 
 let playerList = new LinkedList();
-let grid = {};
+let floorGrid = {};
+let wallGrid = {};
 let wholeRobot = [];
 let animations;
 let ready = false;
 
-const client = io.connect('https://interactivearchitecturebackend.onrender.com');
-//const client = io.connect('localhost:3000');
+//const client = io.connect('https://interactivearchitecturebackend.onrender.com');
+const client = io.connect('localhost:3000');
 
-loaders.loadModels(client, grid, wholeRobot);
+loaders.loadModels(client, floorGrid, wallGrid, wholeRobot);
 
 client.on('transfer list', (serverList) => {
     playerList.copy(serverList);
@@ -208,6 +209,7 @@ let previousTouch;
 
 document.getElementById('right').addEventListener("touchstart", (e) => {
     previousTouch = e.touches[0];
+    console.log(e)
 });
 
 document.getElementById('jumpButton').addEventListener("touchstart", (e) => {
@@ -216,16 +218,6 @@ document.getElementById('jumpButton').addEventListener("touchstart", (e) => {
         jumpHeight = 0.05;
         moving = true;
         client.emit('player jump', camera.position);
-        // Ensure `requestFullscreen` is called directly within this event handler
-        /*if(!document.fullscreen) {
-            document.documentElement.requestFullscreen().then(() => {
-                console.log("Fullscreen mode activated");
-            }).catch((err) => {
-                console.log("Failed to activate fullscreen mode:", err.message);
-            });
-        }else{
-            document.documentElement.exitFullscreen();
-        }*/
     }
 });
 
@@ -268,7 +260,7 @@ document.addEventListener("mousemove", (e) => {
         const xh = e.movementX * 0.001;
         const yh = e.movementY * 0.001;
 
-        phi += -xh;
+        phi -= xh;
         theta = clamp(theta - yh, -Math.PI / 2, Math.PI / 2);
 
         qz = new THREE.Quaternion();
@@ -337,15 +329,23 @@ document.addEventListener("keyup", (e) => {
     if (e.key === "d" || e.key === "ArrowRight") rightBool = false;
     if (e.key === " ") upBool = false;
 });
-
+let movement = new THREE.Vector3(0, 0, 0);
+let moved = false;
 function move(delta) {
 
+    moved = false;
     if (mobile && ready) {
-        camera.position.add(mobileMovement);
+        //camera.position.add(mobileMovement);
+        forwardRay.set(camera.position, mobileMovement);
+        floor(rayCaster, forwardRay);
+        if (!hit) {
+            camera.position.add(mobileMovement);
+            moved = true;
+        }
         //client.emit('player position', {x: camera.position.x, y: camera.position.y, z: camera.position.z});
     }
     else{
-        let movement = new THREE.Vector3(0, 0, 0);
+        movement = new THREE.Vector3(0, 0, 0);
         let speed = 5 * delta;
         inputAmount = 0;
 
@@ -383,31 +383,36 @@ function move(delta) {
             isJumping = true;
             jumpHeight = 0.05;
             moving = true;
+            moved = true;
             client.emit('player jump', camera.position);
         }
         if(inputAmount > 0) {
             let totDir = forward.add(backward.add(left.add(right)));
             movement = totDir.divideScalar(Math.sqrt(inputAmount));
-            camera.position.add(movement);
+            forwardRay.set(camera.position, movement);
+            floor(rayCaster, forwardRay);
+            if (!hit) {
+                camera.position.add(movement);
+                moved = true;
+            }
         }
     }
+    //console.log(movement, forwardRay);
 
-    floor(rayCaster);
-
-    if (moving && ready) {
+    if (moving && ready && moved) {
         client.emit('player position', {x: camera.position.x, y: camera.position.y, z: camera.position.z});
     }
     if(!isJumping && !mobile) moving = false;
 }
-
+let hit = false;
 let rayStart = (camera.position);//new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
 
-const direction = new THREE.Vector3(0, -1, 0);
-let rayCaster = new THREE.Raycaster(rayStart, direction, 0, 5);
+const down = new THREE.Vector3(0, -1, 0);
+let rayCaster = new THREE.Raycaster(rayStart, down, 0, 5);
+let forwardRay = new THREE.Raycaster(rayStart, movement, 0, 5);
 
 let isJumping = false;
 let jumpHeight = 0;
-
 // ANIMATION LOOP ###############################################################
 const stats = Stats();
 document.body.appendChild(stats.dom);
@@ -422,7 +427,6 @@ function animate() {
     move(delta);
 
     //runAnimations();
-
     // Render three.js
     renderer.render(scene, camera);
 
@@ -430,63 +434,84 @@ function animate() {
     stats.update();
 }
 
-function floor(rayCaster){
+function floor(rayCaster, forwardRay){
     let currentCell = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
-    let distance = 1000;
-    let closestObject
 
-    //Find the closest distance to ray
-    for(let i = 0; i < 7; i++) {
-        //if (i === 0)
-        if (i === 1) currentCell.x += constant.cellSize;
-        else if (i === 2) currentCell.x -= constant.cellSize;
-        else if (i === 3) currentCell.y += constant.cellSize;
-        else if (i === 4) currentCell.y -= constant.cellSize;
-        else if (i === 5) currentCell.z += constant.cellSize;
-        else if (i === 6) currentCell.z -= constant.cellSize;
+    let stepDistance = 1000;
+    let closestFloor;
 
-        let cellObjects = getObjectsInCell(currentCell, grid, constant.cellSize);
+    let forwardDistance = 1000;
+    let closestWall;
 
-        //if(i!==3) console.log(cellObjects.length);
-        if (cellObjects.length > 0) {
-            let rayCastHits = rayCaster.intersectObjects(cellObjects);
 
-            if (rayCastHits.length > 0) {
+    let floorCellObjects = getObjectsInCell(currentCell, floorGrid, constant.cellSize);
 
-                //find the lowest distance object
-                for (let i = 0; i < cellObjects.length; i++) {
-                    //if(rayCastHits[i].material.name === "Paint") console.log(rayCastHits[i].material.name);
-                    if (rayCastHits[i] && rayCastHits[i].distance < distance && rayCastHits[i] !== closestObject) {
-                        //console.log(rayCastHits[i].object.material.name)
-                        closestObject = rayCastHits[i];
-                        distance = closestObject.distance;
-                        //test = i;
-                    }
+    //if(i!==3) console.log(cellObjects.length);
+    if (floorCellObjects.length > 0) {
+        let floorHits = rayCaster.intersectObjects(floorCellObjects);
+
+        if (floorHits.length > 0) {
+
+            //find the lowest stepDistance object
+            for (let i = 0; i < floorCellObjects.length; i++) {
+                //if(floorHits[i].material.name === "Paint") console.log(floorHits[i].material.name);
+                if (floorHits[i] && floorHits[i].distance < stepDistance && floorHits[i] !== closestFloor) {
+                    closestFloor = floorHits[i];
+                    stepDistance = closestFloor.distance;
                 }
             }
         }
+        
     }
-    if(isJumping && (constant.modelHeight - distance) > 0) {
+
+    if(isJumping && (constant.modelHeight - stepDistance) > 0) {
         isJumping = false;
         jumpHeight = 0;
-    }else if(isJumping){
+    }
+    else if(isJumping){
         jumpHeight -= 0.001;
         camera.position.y += jumpHeight;
     }
 
     if(!isJumping){
-        if(closestObject) {
+        if(closestFloor) {
+            if ((constant.modelHeight - stepDistance) > 0) {
 
-            if ((constant.modelHeight - distance) > 0) {
-
-                camera.position.y += (constant.modelHeight - distance);
+                camera.position.y += (constant.modelHeight - stepDistance);
             } else {
-                camera.position.y -= (distance - constant.modelHeight);
+                camera.position.y -= (stepDistance - constant.modelHeight);
             }
-
         }else {
             camera.position.y -= 0.07;
         }
+    }
+
+
+    let wallCellObjects = getObjectsInCell(currentCell, wallGrid, constant.cellSize);
+
+    //if(i!==3) console.log(cellObjects.length);
+    if (wallCellObjects.length > 0) {
+
+        let forwardHits = forwardRay.intersectObjects(wallCellObjects);
+        
+        if (forwardHits.length > 0) {
+    
+            //find the lowest stepDistance object
+            for (let i = 0; i < wallCellObjects.length; i++) {
+                //if(floorHits[i].material.name === "Paint") console.log(floorHits[i].material.name);
+                if (forwardHits[i] && forwardHits[i].distance < forwardDistance && forwardHits[i] !== closestWall) {
+                    closestWall = forwardHits[i];
+                    forwardDistance = closestWall.distance;
+                    
+                }
+            }
+        }
+    }
+
+    if(closestWall && forwardDistance < 0.2) {
+        hit = true;
+    }else{
+        hit = false;
     }
 }
 
@@ -504,4 +529,8 @@ function runAnimations() {
         current.sent = false;
         current = current.next;
     }
+}
+
+function c(x) {
+    console.log(x);
 }

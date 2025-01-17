@@ -6,7 +6,7 @@ import * as constant from "./constants.js";
 import {Rhino3dmLoader} from "three/addons/loaders/3DMLoader.js";
 
 
-export function loadModels(client, grid, wholeRobot)
+export function loadModels(client, floorGrid, wallGrid, wholeRobot)
 {
     //const GLTFloader = new GLTFLoader();
     new GLTFLoader().load("./robot.glb", function (gltf) {
@@ -51,7 +51,7 @@ export function loadModels(client, grid, wholeRobot)
 
     planeMesh.name = "plane";
     scene.add(planeMesh);
-    setObjectCells(planeMesh, grid);
+    setObjectCells(planeMesh, floorGrid);
 
     const loader = new Rhino3dmLoader().setLibraryPath("https://cdn.jsdelivr.net/npm/rhino3dm@8.4.0/");
 
@@ -75,11 +75,11 @@ export function loadModels(client, grid, wholeRobot)
                     child.castShadow = true;
                     if (child.material.name === "Paint") {
                         child.name = "Stairs";
-                        setObjectCells(child, grid, constant.cellSize);
+                        setObjectCells(child, floorGrid, constant.cellSize);
 
                     } else {
                         child.name = "Wall";
-                        setObjectCells(child, grid, constant.cellSize);
+                        setObjectCells(child, wallGrid, constant.cellSize);
                     }
 
                 }
