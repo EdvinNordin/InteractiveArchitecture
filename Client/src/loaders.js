@@ -51,6 +51,7 @@ export function loadModels(client, floorGrid, wallGrid, wholeRobot)
 
     planeMesh.name = "plane";
     scene.add(planeMesh);
+    planeMesh.layers.enable(0);
     setObjectCells(planeMesh, floorGrid);
 
     const loader = new Rhino3dmLoader().setLibraryPath("https://cdn.jsdelivr.net/npm/rhino3dm@8.4.0/");
@@ -74,11 +75,10 @@ export function loadModels(client, floorGrid, wallGrid, wholeRobot)
                     child.recieveShadow = true;
                     child.castShadow = true;
                     if (child.material.name === "Paint") {
-                        child.name = "Stairs";
+                        child.layers.enable(0);
                         setObjectCells(child, floorGrid, constant.cellSize);
-
                     } else {
-                        child.name = "Wall";
+                        child.layers.enable(1);
                         setObjectCells(child, wallGrid, constant.cellSize);
                     }
 
@@ -93,39 +93,17 @@ export function loadModels(client, floorGrid, wallGrid, wholeRobot)
         }
     );
 
-    /*
+    
     loader.load("land.3dm", function (object) {
-        //object.rotation.x = -Math.PI / 2; // rotate the model
-        //object.position.y = 50;
-        //object.scale.set(constant.scale, constant.scale, 0.008);
-        let box = new THREE.Box3().setFromObject(object, false);
-        let center = new THREE.Vector3();
-        box.getCenter(center);
-        let i = 1;
-        object.traverse((child) => {
-            if (child.isMesh) {
-                child.material.metalness = 0;
-                child.material.side = 0;
-                child.recieveShadow = true;
-                child.castShadow = true;
-                child.material.wireframe = false;
-                //console.log(child);
-                if (i === 1) {
-                    child.rotation.x = -Math.PI / 2; // rotate the model
-                    child.position.y = 0;
-                    child.scale.set(constant.scale, constant.scale, constant.scale);
-                    scene.add(child);
-
-                }
-                i++;
-            }
-        });
+                
+        scene.add(object);
+        
     }, function (progress) {
         //console.log((progress.loaded / progress.total) * 100 + "%");
     }, function (error) {
         console.log(error);
     });
-    */
+    
 
     /*
     loader.load(

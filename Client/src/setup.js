@@ -58,7 +58,7 @@ window.addEventListener("resize", onWindowResize);
 initSky();
 
 //Scalable Ambient Occlusion (SAO)
-//initSAO();
+initSAO();
 
 function initSky() {
   sky = new Sky();
@@ -92,7 +92,7 @@ function initSky() {
   dirLight.position.copy(sun).multiplyScalar(100);
 
   renderer.toneMappingExposure = effectController.exposure;
-  //renderer.render(scene, camera);
+  renderer.render(scene, camera);
 }
 
 function initSAO() {
