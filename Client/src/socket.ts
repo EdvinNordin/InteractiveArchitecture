@@ -78,7 +78,7 @@ class LinkedList {
             }
             current = current.next;
         }
-        console.log("Player not found");
+        //console.log("Player not found");
         return null;
     }
 
@@ -99,8 +99,9 @@ class LinkedList {
     }
 }
 
-export const client: Socket = io('https://interactivearchitecturebackend.onrender.com');
-//export const client: Socket = io('localhost:3000');
+//export const client: Socket = io('https://interactivearchitecturebackend.onrender.com');
+export const client: Socket = io('localhost:3000');
+export let ready: boolean = false;
 
 loadRobot().then((value: unknown) => {
     const robot = value as THREE.Object3D;
@@ -108,15 +109,15 @@ loadRobot().then((value: unknown) => {
     client.emit('player ready');
 
     let playerList: LinkedList = new LinkedList();
-    let ready: boolean = false;
 
-    socketFunctions(playerList, robot, ready);
+    socketFunctions(playerList, robot);
 
 }).catch((error) => {
     console.error("Error loading robot:", error);
 });
 
-export function socketFunctions(playerList: LinkedList, robot: THREE.Object3D, ready: boolean): void {
+
+export function socketFunctions(playerList: LinkedList, robot: THREE.Object3D): void {
 
     client.on('transfer list', (serverList: LinkedList) => {
         playerList.copy(serverList, robot);
