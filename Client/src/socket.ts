@@ -126,7 +126,7 @@ export function socketFunctions(playerList: LinkedList, robot: THREE.Object3D): 
 
     client.on('new player', (id: string) => {
         playerList.add(id, robot);
-        client.emit('give state', camera.position.toArray(), camera.quaternion.toArray(), id);
+        client.emit('give state', { x: camera.position.x, y: camera.position.y, z: camera.position.z }, { x: camera.quaternion.x, y: camera.quaternion.y, z: camera.quaternion.z }, id);
     });
 
     client.on('set state', (pos: { x: number, y: number, z: number }, rot: { x: number, y: number, z: number, w: number }, id: string) => {
