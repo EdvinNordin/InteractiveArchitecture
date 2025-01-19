@@ -149,6 +149,9 @@ function findClosestObject(currentCell: THREE.Vector3, grid: { [key: string]: TH
     return [closestDistance, closestObject];
 }
 
+
+// EVENT LISTENERS ############################################################################################################
+
 if (!mobile) {
     // ROTATION
     document.addEventListener("mousemove", (e) => {
@@ -252,8 +255,6 @@ else {
                 })
             }
         }
-
-
 
         // JUMP BUTTON
         const jumpButton = document.getElementById('jumpButton');
