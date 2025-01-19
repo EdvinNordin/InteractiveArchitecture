@@ -128,10 +128,17 @@ export function socketFunctions(playerList: LinkedList, robot: THREE.Object3D, r
         client.emit('give state', camera.position.toArray(), camera.quaternion.toArray(), id);
     });
 
-    client.on('set state', (pos: { x: number, y: number, z: number }, rot: [number, number, number, number], id: string) => {
+    client.on('set state', (pos: { x: number, y: number, z: number }, rot: { x: number, y: number, z: number, w: number }, id: string) => {
         let player: Player | null = playerList.find(id);
         if (player) {
             player.model.position.set(pos.x, pos.y - constant.modelHeight, pos.z);
+            let quaternion = new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w);
+            let yaw = getYawRotation(quaternion);
+            let pitch = getPitchRotation(new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w));
+            player.model.quaternion.set(yaw.x, yaw.y, yaw.z, yaw.w);
+            if (player.modelHead) {
+                player.modelHead.quaternion.set(pitch.x, pitch.y, pitch.z, pitch.w);
+            }
         }
     });
 
