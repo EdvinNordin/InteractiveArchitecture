@@ -18,11 +18,19 @@ let movementVector: [THREE.Vector3, THREE.Vector3, THREE.Vector3, THREE.Vector3]
 let mobileMove: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
 
 // rotation
-let phi: number = 0, theta: number = 0;
-let q: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1), qx: THREE.Quaternion = new THREE.Quaternion(), qz: THREE.Quaternion = new THREE.Quaternion();
+let phi: number = 0;
+let theta: number = 0;
+
+let quat: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1);
+let quatX: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1);
+let quatZ: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1);
+
+
+let rotationTouchId: number | null = null;
+let movementTouchId: number | null = null;
 
 // mobile
-let previousTouch: Touch;
+let previousTouch: Touch | null;
 let jumpPressed: boolean = false;
 
 
@@ -36,7 +44,7 @@ export function PCMovement(delta: number) {
 
         if (movementBool[i]) {
             movementVector[i].set(constant.movementDir[i].x * speed, constant.movementDir[i].y * speed, constant.movementDir[i].z * speed)
-            movementVector[i] = applyQuaternion(movementVector[i], qx)
+            movementVector[i] = applyQuaternion(movementVector[i], quatX)
             movementVector[i].y = 0;
             inputAmount++;
         }
@@ -163,16 +171,16 @@ if (!mobile) {
             phi -= xh;
             theta = clamp(theta - yh, -Math.PI / 2, Math.PI / 2);
 
-            qz = new THREE.Quaternion();
-            qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi);
-            qz.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta);
+            quatZ = new THREE.Quaternion();
+            quatX.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi);
+            quatZ.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta);
 
-            q = qx.multiply(qz);
+            quat = quatX.multiply(quatZ);
 
-            camera.quaternion.copy(q);
+            camera.quaternion.copy(quat);
 
             if (ready) {
-                client.emit('player rotation', { x: q.x, y: q.y, z: q.z, w: q.w });
+                client.emit('player rotation', { x: quat.x, y: quat.y, z: quat.z, w: quat.w });
             }
         }
     });
@@ -196,21 +204,25 @@ if (!mobile) {
         if (e.key === " ") movementBool[4] = false;
     });
 }
+
 else {
-
-    // TOUCH ROTATION
+    // TOUCH ROTATION AND MOVEMENT
     const rightElement = document.getElementById('right');
-    if (rightElement) {
+    const joystickZone = document.getElementById('joystick');
+
+    if (rightElement && joystickZone) {
         rightElement.addEventListener("touchstart", (e) => {
-            previousTouch = e.touches[0];
+            if (rotationTouchId === null) {
+                rotationTouchId = e.touches[0].identifier;
+                previousTouch = e.touches[0];
+            }
         });
+
         rightElement.addEventListener("touchmove", (e) => {
-            const touch = e.touches[0];
-            if (previousTouch) {
-
-                const xAmount = touch.pageX - previousTouch.pageX;
-                const yAmount = touch.pageY - previousTouch.pageY;
-
+            const rotationTouch = Array.from(e.touches).find(t => t.identifier === rotationTouchId);
+            if (rotationTouch && previousTouch) {
+                const xAmount = rotationTouch.pageX - previousTouch.pageX;
+                const yAmount = rotationTouch.pageY - previousTouch.pageY;
 
                 const xh = xAmount * 0.005;
                 const yh = yAmount * 0.005;
@@ -218,42 +230,52 @@ else {
                 phi += -xh;
                 theta = clamp(theta - yh, -Math.PI / 2, Math.PI / 2);
 
-                qz = new THREE.Quaternion();
-                qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi);
-                qz.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta);
+                quatZ = new THREE.Quaternion();
+                quatX.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi);
+                quatZ.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta);
 
-                q = qx.multiply(qz);
+                quat = quatX.multiply(quatZ);
 
-                camera.quaternion.copy(q);
+                camera.quaternion.copy(quat);
                 if (ready) {
-                    client.emit('player rotation', { x: q.x, y: q.y, z: q.z, w: q.w });
+                    client.emit('player rotation', { x: quat.x, y: quat.y, z: quat.z, w: quat.w });
                 }
+                previousTouch = rotationTouch;
             }
-            previousTouch = touch;
-        })
+        });
 
-        // JOYSTICK
-        const joystickZone = document.getElementById('joystick');
-        if (joystickZone) {
-            let joystickL: nipplejs.JoystickManager = nipplejs.create({
-                zone: joystickZone,
-                mode: 'static',
-                position: { left: '10%', top: '80%' },
-                restJoystick: true,
+        rightElement.addEventListener("touchend", (e) => {
+            if (rotationTouchId !== null && !Array.from(e.touches).some(t => t.identifier === rotationTouchId)) {
+                rotationTouchId = null;
+                previousTouch = null;
+            }
+        });
+
+        let joystickL: nipplejs.JoystickManager = nipplejs.create({
+            zone: joystickZone,
+            mode: 'static',
+            position: { left: '10%', top: '80%' },
+            restJoystick: true,
+        });
+        if (joystickL) {
+            joystickL.get(0).on('start', (evt, data) => {
+                if (movementTouchId === null) {
+                    movementTouchId = data.identifier;
+                }
             });
 
-            if (joystickL) {
-                joystickL.get(0).on('move', (evt, data) => {
-                    let xDir = data.vector.x;
-                    let zDir = -data.vector.y;
-                    let dir = new THREE.Vector3(xDir * 0.05, 0, zDir * 0.05);
-                    mobileMove = applyQuaternion(dir, qx);
-                })
+            joystickL.get(0).on('move', (evt, data) => {
+                let xDir = data.vector.x;
+                let zDir = -data.vector.y;
+                let dir: THREE.Vector3 = new THREE.Vector3(xDir * 0.05, 0, zDir * 0.05);
+                mobileMove = applyQuaternion(dir, quatX);
+                console.log(mobileMove)
+            });
 
-                joystickL.get(0).on('end', (evt, data) => {
-                    mobileMove.set(0, 0, 0);
-                })
-            }
+            joystickL.get(0).on('end', (evt, data) => {
+                mobileMove.set(0, 0, 0);
+                movementTouchId = null;
+            });
         }
 
         // JUMP BUTTON
