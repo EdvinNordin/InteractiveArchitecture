@@ -99,8 +99,8 @@ class LinkedList {
     }
 }
 
-//export const client: Socket = io('https://interactivearchitecturebackend.onrender.com');
-export const client: Socket = io('localhost:3000');
+export const client: Socket = io('https://interactivearchitecturebackend.onrender.com');
+//export const client: Socket = io('localhost:3000');
 export let ready: boolean = false;
 
 loadRobot().then((value: unknown) => {
