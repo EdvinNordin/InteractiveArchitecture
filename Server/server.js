@@ -5,7 +5,7 @@ const server = http.createServer(app);
 const cors = require("cors");
 const mime = require("mime");
 
-const allowedOrigins = ["https://interactivearchitecture.onrender.com", "http://localhost:5173", "http://localhost:5174"]; // For dev and production
+const allowedOrigins = ["https://interactivearchitecture.onrender.com", "http://localhost:5173", "http://localhost:4173"]; // For dev and production
 const io = require("socket.io")(server, {
     cors: {
         origin: allowedOrigins, // Accept an array of allowed origins
@@ -85,7 +85,6 @@ class LinkedList {
 }
 
 let Players = new LinkedList();
-
 io.on('connection', (socket) => {
     c(socket.id + ' has connected');
 
