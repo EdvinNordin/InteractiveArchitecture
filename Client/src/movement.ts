@@ -204,7 +204,6 @@ if (!mobile) {
         if (e.key === " ") movementBool[4] = false;
     });
 }
-
 else {
     // TOUCH ROTATION AND MOVEMENT
     const rightElement = document.getElementById('right');
@@ -212,13 +211,17 @@ else {
 
     if (rightElement && joystickZone) {
         rightElement.addEventListener("touchstart", (e) => {
-            if (rotationTouchId === null) {
-                rotationTouchId = e.touches[0].identifier;
-                previousTouch = e.touches[0];
+            e.preventDefault();
+            for (let touch of e.touches) {
+                if (rotationTouchId === null && touch.target === rightElement) {
+                    rotationTouchId = touch.identifier;
+                    previousTouch = touch;
+                }
             }
         });
 
         rightElement.addEventListener("touchmove", (e) => {
+            e.preventDefault();
             const rotationTouch = Array.from(e.touches).find(t => t.identifier === rotationTouchId);
             if (rotationTouch && previousTouch) {
                 const xAmount = rotationTouch.pageX - previousTouch.pageX;
@@ -245,6 +248,7 @@ else {
         });
 
         rightElement.addEventListener("touchend", (e) => {
+            e.preventDefault();
             if (rotationTouchId !== null && !Array.from(e.touches).some(t => t.identifier === rotationTouchId)) {
                 rotationTouchId = null;
                 previousTouch = null;
@@ -257,19 +261,19 @@ else {
             position: { left: '10%', top: '80%' },
             restJoystick: true,
         });
+
         if (joystickL) {
             joystickL.get(0).on('start', (evt, data) => {
                 if (movementTouchId === null) {
-                    movementTouchId = data.identifier;
+                    movementTouchId = evt.targetTouches[0].identifier;
                 }
             });
 
             joystickL.get(0).on('move', (evt, data) => {
                 let xDir = data.vector.x;
                 let zDir = -data.vector.y;
-                let dir: THREE.Vector3 = new THREE.Vector3(xDir * 0.05, 0, zDir * 0.05);
+                let dir = new THREE.Vector3(xDir * 0.05, 0, zDir * 0.05);
                 mobileMove = applyQuaternion(dir, quatX);
-                console.log(mobileMove)
             });
 
             joystickL.get(0).on('end', (evt, data) => {
