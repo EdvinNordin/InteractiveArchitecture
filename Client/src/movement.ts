@@ -214,6 +214,7 @@ else {
             e.preventDefault();
             for (let touch of e.touches) {
                 if (rotationTouchId === null && touch.target === rightElement) {
+                    console.log(touch)
                     rotationTouchId = touch.identifier;
                     previousTouch = touch;
                 }
@@ -263,9 +264,10 @@ else {
         });
 
         if (joystickL) {
-            joystickL.get(0).on('start', (evt, data) => {
+            joystickL.get(0).on('start', (evt) => {
                 if (movementTouchId === null) {
-                    movementTouchId = evt.targetTouches[0].identifier;
+                    //console.log(evt.target.id);
+                    movementTouchId = evt.target.id;
                 }
             });
 
