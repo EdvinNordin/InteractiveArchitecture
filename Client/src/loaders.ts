@@ -5,13 +5,16 @@ import { setObjectCells } from "./spatiParti";
 import * as constant from "./constants";
 import { Rhino3dmLoader } from "three/examples/jsm/loaders/3DMLoader";
 
+export let animations: any = [];
 export function loadRobot() {
     return new Promise((resolve, reject) => {
         new GLTFLoader().load("./robot.glb", function (gltf: { scene: any; animations: any; }) {
             let robot = gltf.scene;
-            let animations = gltf.animations;
+            animations = gltf.animations;
+            let mixer = new THREE.AnimationMixer(robot);
             robot.position.set(0, -10, 0);
             robot.scale.set(0.25, 0.25, 0.25);
+            //robot.scale.set(0.005, 0.005, 0.005);
             scene.add(robot);
             resolve(robot);
         },
@@ -27,7 +30,6 @@ export function loadRobot() {
         );
     });
 }
-
 export function loadModels(floorGrid: { [key: string]: THREE.Object3D[] }, wallGrid: { [key: string]: THREE.Object3D[] }) {
 
     let planeMesh = new THREE.Mesh();

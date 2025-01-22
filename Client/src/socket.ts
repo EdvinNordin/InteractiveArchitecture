@@ -2,19 +2,24 @@ import * as THREE from "three";
 import { camera, scene } from "./setup";
 import * as constant from "./constants";
 import { getPitchRotation, getYawRotation } from "./utils";
-import { loadRobot } from "./loaders";
+import { loadRobot, animations } from "./loaders";
 import { io, Socket } from "socket.io-client";
 
+export let mixerList: any = [];
 class Player {
     id: string;
     model: THREE.Object3D;
-    modelHead: THREE.Object3D | undefined;
+    modelHead: THREE.Object3D | null;
+    mixer: THREE.AnimationMixer;
     next: Player | null;
 
-    constructor(id: string, robot: THREE.Object3D) {
+    constructor(id: string, robot: any) {
         this.id = id;
         this.model = robot.clone(true);
         this.modelHead = this.model.getObjectByName("Head") as THREE.Object3D;
+        this.mixer = new THREE.AnimationMixer(this.model);
+        this.mixer.clipAction(animations[2]).play();
+        mixerList.push(this.mixer);
         this.next = null;
         scene.add(this.model);
     }
@@ -102,17 +107,19 @@ class LinkedList {
 export const client: Socket = io('https://interactivearchitecturebackend.onrender.com');
 //export const client: Socket = io('localhost:3000');
 export let ready: boolean = false;
+export let playerListSize: number = 0;
 
-loadRobot().then((value: unknown) => {
-    const robot = value as THREE.Object3D;
+loadRobot().then((robot: any) => {
     //console.log("Robot loaded:", robot);
     client.emit('player ready');
+    console.log(robot)
 
     let playerList: LinkedList = new LinkedList();
+    playerListSize = playerList.size;
 
     socketFunctions(playerList, robot);
 
-}).catch((error) => {
+}).catch((error: any) => {
     console.error("Error loading robot:", error);
 });
 

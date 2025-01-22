@@ -5,6 +5,7 @@ import { camera, scene, renderer, mobile } from "./setup";
 import { floorGrid, wallGrid } from "./spatiParti";
 import { loadModels } from "./loaders";
 import { PCMovement, mobileMovement } from "./movement";
+import { mixerList, playerListSize } from "./socket";
 
 loadModels(floorGrid, wallGrid);
 
@@ -26,8 +27,17 @@ function animate() {
     if (mobile) mobileMovement(delta);
     else PCMovement(delta);
 
+    updateMixers(delta);
+
     renderer.render(scene, camera);
 
     //composer.render();
     stats.update();
+}
+
+function updateMixers(delta: number) {
+
+    for (let i = 0; i < playerListSize; i++) {
+        if (mixerList[i]) mixerList[i].update(delta);
+    }
 }
