@@ -62,7 +62,7 @@ export function PCMovement(delta: number) {
         }
         movement = totDir.divideScalar(Math.sqrt(inputAmount));
     }
-
+    
     let wallHit = collision(delta, movement);
     if (!wallHit) {
         camera.position.add(movement);

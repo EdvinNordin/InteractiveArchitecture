@@ -18,7 +18,7 @@ class Player {
         this.model = robot.clone(true);
         this.modelHead = this.model.getObjectByName("Head") as THREE.Object3D;
         this.mixer = new THREE.AnimationMixer(this.model);
-        this.mixer.clipAction(animations[2]).play();
+        //this.mixer.clipAction(animations[2]).play();
         mixerList.push(this.mixer);
         this.next = null;
         scene.add(this.model);
@@ -104,15 +104,14 @@ class LinkedList {
     }
 }
 
-export const client: Socket = io('https://interactivearchitecturebackend.onrender.com');
-//export const client: Socket = io('localhost:3000');
+//export const client: Socket = io('https://interactivearchitecturebackend.onrender.com');
+export const client: Socket = io('localhost:3000');
 export let ready: boolean = false;
 export let playerListSize: number = 0;
 
 loadRobot().then((robot: any) => {
     //console.log("Robot loaded:", robot);
     client.emit('player ready');
-    console.log(robot)
 
     let playerList: LinkedList = new LinkedList();
     playerListSize = playerList.size;
@@ -134,6 +133,10 @@ export function socketFunctions(playerList: LinkedList, robot: THREE.Object3D): 
     client.on('new player', (id: string) => {
         playerList.add(id, robot);
         client.emit('give state', { x: camera.position.x, y: camera.position.y, z: camera.position.z }, { x: camera.quaternion.x, y: camera.quaternion.y, z: camera.quaternion.z }, id);
+        let player: Player | null = playerList.find(id);
+        if (player) {
+            player.mixer.clipAction(animations[2]).play();
+        }
     });
 
     client.on('set state', (pos: { x: number, y: number, z: number }, rot: { x: number, y: number, z: number, w: number }, id: string) => {
@@ -155,6 +158,11 @@ export function socketFunctions(playerList: LinkedList, robot: THREE.Object3D): 
             const player: Player | null = playerList.find(id);
             if (player) {
                 player.model.position.set(pos.x, pos.y - constant.modelHeight, pos.z);
+                /*if (player.mixer.clipAction(animations[2]).isRunning() == false) {
+                    console.log("Running");
+                    player.mixer.clipAction(animations[2]).stop();
+
+                }*/
             }
         }
     });

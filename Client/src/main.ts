@@ -3,7 +3,7 @@ import Stats from "three/examples/jsm/libs/stats.module";
 
 import { camera, scene, renderer, mobile } from "./setup";
 import { floorGrid, wallGrid } from "./spatiParti";
-import { loadModels } from "./loaders";
+import { loadModels, animations } from "./loaders";
 import { PCMovement, mobileMovement } from "./movement";
 import { mixerList, playerListSize } from "./socket";
 
@@ -16,7 +16,6 @@ document.body.appendChild(stats.dom);
 // delta
 const clock = new THREE.Clock();
 let delta;
-
 // ANIMATION LOOP ######################################################################
 animate();
 function animate() {
@@ -29,15 +28,19 @@ function animate() {
 
     updateMixers(delta);
 
+
     renderer.render(scene, camera);
 
     //composer.render();
     stats.update();
+    console.log();
 }
 
 function updateMixers(delta: number) {
-
     for (let i = 0; i < playerListSize; i++) {
-        if (mixerList[i]) mixerList[i].update(delta);
+        if (mixerList[i]) {
+            //console.log(mixerList[i]._actions[0]._clip.name);
+            mixerList[i].update(delta);
+        }
     }
 }
