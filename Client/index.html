@@ -1,29 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Beautiful aRICHtecture</title>
+    <link rel="icon" href="rich.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-<head>
-	<meta charset="utf-8">
-	<title>Beautiful aRICHtecture</title>
-	<link rel="icon" href="rich.png">
-	<link rel="stylesheet" href="styles.css">
-</head>
-
-<body>
-	<div id="instructions">
-		<p style="font-size:36px">
-			Click to play
-		</p>
-		<p>
-			Move: WASD<br />
-			Look: MOUSE<br />
-			Jump: Spacebar
-		</p>
-	</div>
-	<div id="jumpButton"><img src="jump.png" id="jumpIMG"></div>
-	<div id="fullscreenButton"><img src="fullscreen.svg" id="fullscreenIMG"></div>
-	<div id="right"></div>
-	<div id="joystick"></div>
-	<script type="module" src="/src/main.ts"></script>
-</body>
-
+  <body>
+    <div id="instructions">
+      <p style="font-size: 36px">Click to play</p>
+      <p>
+        Move: WASD<br />
+        Look: MOUSE<br />
+        Jump: Spacebar
+      </p>
+    </div>
+    <div id="midDot"></div>
+    <div id="hp"><img src="hp.png" id="hpIMG" /></div>
+    <div id="sword"><img src="sword.png" id="swordIMG" /></div>
+    <div id="jumpButton"><img src="jump.png" id="jumpIMG" /></div>
+    <div id="fullscreenButton">
+      <img src="fullscreen.svg" id="fullscreenIMG" />
+    </div>
+    <div id="right"></div>
+    <div id="joystick"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>

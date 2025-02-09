@@ -77,6 +77,7 @@ initSAO();
 
 
 const instructions = document.getElementById("instructions");
+const sword = document.getElementById("sword");
 
 // CSS
 if (!mobile) {
@@ -96,17 +97,17 @@ if (!mobile) {
 
   document.addEventListener("pointerlockchange", (e) => {
     if (document.pointerLockElement === document.body) {
-      if (instructions) {
+      if (instructions && sword) {
         instructions.style.display = "none";
       }
     } else {
-      if (instructions) {
+      if (instructions && sword) {
         instructions.style.display = "";
       }
     }
   });
 } else {
-  if (instructions) {
+  if (instructions && sword) {
     instructions.style.display = "none";
   }
 }

@@ -12,7 +12,7 @@ loadModels(floorGrid, wallGrid);
 // stats
 const stats: Stats = new Stats();
 document.body.appendChild(stats.dom);
-
+ 
 // delta
 const clock = new THREE.Clock();
 let delta;
@@ -33,7 +33,6 @@ function animate() {
 
     //composer.render();
     stats.update();
-    console.log();
 }
 
 function updateMixers(delta: number) {
