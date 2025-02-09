@@ -93,7 +93,7 @@ io.on("connection", (socket) => {
     Players.add(socket.id);
     socket.emit("transfer list", Players);
     socket.broadcast.emit("new player", socket.id);
-    console.log("There are now " + Players.size + " players in the game");
+    c("There are now " + Players.size + " players in the game");
   });
 
   socket.on("give state", (pos, rot, sender) => {
