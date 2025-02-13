@@ -11,10 +11,21 @@ const allowedOrigins = [
   "http://localhost:5173",
   //"http://localhost:5174",
 ]; // For dev and production
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+    credentials: true,
+  })
+);
+
 const io = require("socket.io")(server, {
   cors: {
     origin: allowedOrigins, // Accept an array of allowed origins
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
@@ -26,6 +37,7 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`listening on *:${PORT}`);
 });
+
 class Player {
   constructor(id) {
     this.id = id;
