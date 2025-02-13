@@ -3,11 +3,10 @@ import Stats from "three/examples/jsm/libs/stats.module";
 
 import { camera, scene, renderer, mobile } from "./setup";
 import { floorGrid, wallGrid } from "./spatiParti";
-import { loadModels, animations } from "./loaders";
+import { loadModels } from "./loaders";
 import { PCMovement, mobileMovement, quat } from "./movement";
 import { hit } from "./combat";
 import { client, ready, currentPlayer, playerList } from "./socket";
-import { clamp, getPitchRotation, getYawRotation } from "./utils";
 
 loadModels(floorGrid, wallGrid);
 
@@ -26,6 +25,17 @@ function animate() {
 
   delta = clock.getDelta();
 
+  updatePlayers(delta, ready);
+
+  updateMixers(delta);
+
+  renderer.render(scene, camera);
+
+  //composer.render();
+  //stats.update();
+}
+
+function updatePlayers(delta: number, ready: boolean) {
   if (ready) {
     if (mobile) mobileMovement(delta);
     else {
@@ -39,26 +49,29 @@ function animate() {
     }
     if (
       currentPlayer.mixer
-        .clipAction(currentPlayer.model.animations[0])
+        .clipAction(currentPlayer.model.animations[2])
         .isRunning()
     ) {
       hit();
     }
+
     if (!currentPlayer.targetable) iFrames(delta);
-    //console.log(currentPlayer.targetable);
   }
-
-  updateMixers(delta);
-
-  renderer.render(scene, camera);
-
-  //composer.render();
-  //stats.update();
 }
 
 function updateMixers(delta: number) {
   let current: any = playerList.head;
   while (current != null) {
+    let anyAnimationRunning = false;
+    for (let i = 0; i < current.model.animations.length; i++) {
+      if (current.mixer.clipAction(current.model.animations[i]).isRunning()) {
+        anyAnimationRunning = true;
+        break;
+      }
+    }
+    if (!anyAnimationRunning) {
+      current.mixer.clipAction(current.model.animations[0]).play();
+    }
     current.mixer.update(delta);
     current = current.next;
   }

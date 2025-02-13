@@ -121,12 +121,20 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("update position", pos, socket.id);
   });
 
+  socket.on("position animation", () => {
+    socket.broadcast.emit("update position animation", socket.id);
+  });
+
   socket.on("player rotation", (rot) => {
     socket.broadcast.emit("update rotation", rot, socket.id);
   });
 
   socket.on("player jump", () => {
-    socket.broadcast.emit("player jump", socket.id);
+    socket.broadcast.emit("update jump", socket.id);
+  });
+
+  socket.on("player roll", () => {
+    socket.broadcast.emit("update roll", socket.id);
   });
 
   socket.on("attacking", (attackerID) => {

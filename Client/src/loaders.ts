@@ -50,12 +50,23 @@ export function loadModel() {
             i++;
           }
         });
-
+        model = object;
         const animLoader = new FBXLoader();
-        animLoader.load("animTest2.fbx", (anim) => {
+        animLoader.load("idleAnim.fbx", (anim) => {
+          anim.animations[0].name = "idle";
           object.animations = anim.animations;
-          //scene.add(object);
-          object.scale.setScalar(0.0025);
+        });
+        animLoader.load("runAnim.fbx", (anim) => {
+          anim.animations[0].name = "run";
+          object.animations.push(...anim.animations);
+        });
+        animLoader.load("attackAnim.fbx", (anim) => {
+          anim.animations[0].name = "attack";
+          object.animations.push(...anim.animations);
+        });
+        animLoader.load("rollAnim.fbx", (anim) => {
+          anim.animations[0].name = "roll";
+          object.animations.push(...anim.animations);
           model = object;
           resolve(object);
         });

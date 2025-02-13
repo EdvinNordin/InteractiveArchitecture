@@ -51,13 +51,17 @@ let rollReady: boolean = true;
 let rollLength: number = 100;
 let rollingTimer: number = rollLength;
 let rollCD: number = 100;
-let rollDirection: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+let movement = new THREE.Vector3(0, 0, 0);
 
 export function PCMovement(delta: number) {
   let speed = 5 * delta;
   let inputAmount = 0;
-  let movement = new THREE.Vector3(0, 0, 0);
 
+  // rolling timer
+  if (!rollReady) {
+    rollingTimer--;
+  }
+  // rolling done and cd
   if (rollingTimer <= 0) {
     rolling = false;
     if (rollingTimer <= -rollCD) {
@@ -65,53 +69,90 @@ export function PCMovement(delta: number) {
       rollingTimer = rollLength;
     }
   }
+
+  // sets rolling speed
+  if (!rolling) {
+    movement.set(0, 0, 0);
+    // sets movement vector
+    for (let i = 0; i < 4; i++) {
+      movementVector[i].set(0, 0, 0);
+
+      if (movementBool[i]) {
+        movementVector[i].set(
+          constant.movementDir[i].x * speed,
+          constant.movementDir[i].y * speed,
+          constant.movementDir[i].z * speed
+        );
+        movementVector[i] = movementVector[i].applyQuaternion(
+          getYawRotation(quat)
+        );
+        movementVector[i].y = 0;
+        inputAmount++;
+      }
+    }
+
+    // JUMPING
+    if (movementBool[4] && !isJumping) {
+      isJumping = true;
+      jumpHeight = 0.05;
+      client.emit("player jump", currentPlayer.model.position);
+    }
+    // total movement vector
+    if (inputAmount > 0) {
+      let totDir = new THREE.Vector3(0, 0, 0);
+      for (let i = 0; i < 4; i++) {
+        totDir.add(movementVector[i].clone());
+      }
+      movement = totDir.divideScalar(Math.sqrt(inputAmount));
+
+      // running animation
+      if (
+        !currentPlayer.mixer
+          .clipAction(currentPlayer.model.animations[1])
+          .isRunning() &&
+        !currentPlayer.mixer
+          .clipAction(currentPlayer.model.animations[2])
+          .isRunning()
+      ) {
+        client.emit("position animation", {});
+        const action = currentPlayer.mixer.clipAction(
+          currentPlayer.model.animations[1]
+        );
+
+        currentPlayer.mixer.stopAllAction();
+        action.play();
+      }
+    } else if (
+      !currentPlayer.mixer
+        .clipAction(currentPlayer.model.animations[2])
+        .isRunning()
+    ) {
+      const action = currentPlayer.mixer.clipAction(
+        currentPlayer.model.animations[0]
+      );
+      currentPlayer.mixer.stopAllAction();
+      //action.setLoop(THREE.LoopOnce, 1);
+      action.play();
+    }
+  }
+  // start rolling
   if (movementBool[5] && rollReady && !isJumping) {
     rolling = true;
     rollReady = false;
-  }
-  if (rolling) {
-    speed = speed / 2;
-  }
-  for (let i = 0; i < 4; i++) {
-    movementVector[i].set(0, 0, 0);
-
-    if (movementBool[i]) {
-      movementVector[i].set(
-        constant.movementDir[i].x * speed,
-        constant.movementDir[i].y * speed,
-        constant.movementDir[i].z * speed
-      );
-      movementVector[i] = movementVector[i].applyQuaternion(
-        getYawRotation(quat)
-      );
-      movementVector[i].y = 0;
-      inputAmount++;
-    }
-  }
-  if (!rollReady) {
-    rollingTimer--;
-  }
-
-  if (movementBool[4] && !isJumping) {
-    isJumping = true;
-    jumpHeight = 0.05;
-    client.emit("player jump", currentPlayer.model.position);
-  }
-
-  if (inputAmount > 0) {
-    let totDir = new THREE.Vector3(0, 0, 0);
-    for (let i = 0; i < 4; i++) {
-      totDir.add(movementVector[i].clone());
-    }
-
-    movement = totDir.divideScalar(Math.sqrt(inputAmount));
+    movement.multiplyScalar(0.5);
+    client.emit("player roll", {});
+    const action = currentPlayer.mixer.clipAction(
+      currentPlayer.model.animations[3]
+    );
+    action.timeScale = 1.5; // Increase the speed of the animation
+    currentPlayer.mixer.stopAllAction();
+    action.setLoop(THREE.LoopOnce, 1);
+    action.play();
   }
 
   let wallHit = collision(delta, movement);
   if (!wallHit && !movement.equals(new THREE.Vector3(0, 0, 0))) {
     currentPlayer.model.position.add(movement);
-    //currentPlayer.model.quaternion.copy(getYawRotation(quat));
-
     client.emit("player position", {
       x: currentPlayer.model.position.x,
       y: currentPlayer.model.position.y,

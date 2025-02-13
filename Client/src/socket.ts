@@ -36,6 +36,7 @@ class Player {
     });
     //this.weapon = weapon;
     this.mixer = new THREE.AnimationMixer(this.model);
+    this.mixer.clipAction(this.model.animations[0]).play();
 
     mixerList.push(this.mixer);
     this.next = null;
@@ -118,10 +119,10 @@ class LinkedList {
   }
 }
 
-//export const client: Socket = io("localhost:3000");
-export const client: Socket = io(
-  "https://interactivearchitecturebackend.onrender.com/"
-);
+export const client: Socket = io("localhost:3000");
+// export const client: Socket = io(
+//   "https://interactivearchitecturebackend.onrender.com/"
+// );
 export let ready: boolean = false;
 export let playerListSize: number = 0;
 export let playerList: LinkedList = new LinkedList();
@@ -197,6 +198,18 @@ export function socketFunctions(playerList: LinkedList): void {
     }
   );
 
+  client.on("update position animation", (id: string) => {
+    if (ready) {
+      const player: Player | null = playerList.find(id);
+      if (player) {
+        const action = player.mixer.clipAction(player.model.animations[1]);
+        player.mixer.stopAllAction();
+        action.setLoop(THREE.LoopOnce, 1);
+        action.play();
+      }
+    }
+  });
+
   client.on(
     "update rotation",
     (rot: { x: number; y: number; z: number; w: number }, id: string) => {
@@ -223,15 +236,25 @@ export function socketFunctions(playerList: LinkedList): void {
     }
   });
 
+  client.on("update roll", (id: string) => {
+    if (ready) {
+      const player: Player | null = playerList.find(id);
+      if (player) {
+        const action = player.mixer.clipAction(player.model.animations[3]);
+        player.mixer.stopAllAction();
+        action.setLoop(THREE.LoopOnce, 1);
+        action.play();
+      }
+    }
+  });
+
   client.on("attack animation", (id: string) => {
     if (ready) {
       const player: Player | null = playerList.find(id);
       if (player) {
-        const action = player.mixer.clipAction(player.model.animations[0]);
-
-        action.reset();
+        const action = player.mixer.clipAction(player.model.animations[2]);
+        player.mixer.stopAllAction();
         action.setLoop(THREE.LoopOnce, 1);
-        action.clampWhenFinished = true;
         action.play();
       }
     }
@@ -259,7 +282,6 @@ export function socketFunctions(playerList: LinkedList): void {
           if (hp) {
             const currentWidth = parseFloat(hp.style.width);
             hp.style.width = `${currentPlayer.hp}%`;
-            //hp.style.width = `${Math.max(0, currentWidth - 10)}%`;
           }
           console.log(currentPlayer.hp);
           if (currentPlayer.hp <= 0) {
