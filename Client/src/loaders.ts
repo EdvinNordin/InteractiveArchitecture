@@ -4,23 +4,21 @@ import { scene } from "./setup";
 import { setObjectCells } from "./spatiParti";
 import * as constant from "./constants";
 import { Rhino3dmLoader } from "three/examples/jsm/loaders/3DMLoader";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 
 export let animations: any = [];
 
-export function loadRobot() {
+/*export function loadModel() {
   return new Promise((resolve, reject) => {
     new GLTFLoader().load(
-      "./paladino.glb",
+      //"./paladino2.glb",
+      "./selfRigged.glb",
       function (gltf: { scene: any; animations: any }) {
-        let robot = gltf.scene;
-        console.log(robot);
+        let model = gltf.scene;
         animations = gltf.animations;
-        //let mixer = new THREE.AnimationMixer(robot);
-        robot.position.set(0, -10, 0);
-        robot.scale.set(0.25, 0.25, 0.25);
-        //robot.scale.set(0.005, 0.005, 0.005);
-        //scene.add(robot);
-        resolve(robot);
+        console.log(model);
+        //scene.add(model);
+        resolve(model);
       },
       function (xhr: { loaded: number; total: number }) {
         if ((xhr.loaded / xhr.total) * 100 === 100) {
@@ -28,6 +26,44 @@ export function loadRobot() {
         }
       },
       function (error: any) {
+        console.log(error);
+        reject(error);
+      }
+    );
+  });
+} */
+export let weapon: THREE.Mesh;
+export let model: THREE.Object3D;
+export function loadModel() {
+  return new Promise((resolve, reject) => {
+    const loader = new FBXLoader();
+    loader.load(
+      "pala.fbx",
+      (object) => {
+        //object.rotation.x = Math.PI / 2;
+        let i: number = 0;
+        object.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            if (i === 1) {
+              weapon = child;
+            }
+            i++;
+          }
+        });
+
+        const animLoader = new FBXLoader();
+        animLoader.load("animTest2.fbx", (anim) => {
+          object.animations = anim.animations;
+          //scene.add(object);
+          object.scale.setScalar(0.0025);
+          model = object;
+          resolve(object);
+        });
+      },
+      (xhr) => {
+        // Loading progress
+      },
+      (error) => {
         console.log(error);
         reject(error);
       }

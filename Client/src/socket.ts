@@ -1,33 +1,44 @@
 import * as THREE from "three";
 import { camera, scene } from "./setup";
-import * as constant from "./constants";
 import { getPitchRotation, getYawRotation } from "./utils";
-import { loadRobot } from "./loaders";
-import { dashing } from "./movement";
+import { loadModel, animations, weapon, model } from "./loaders";
+import { rolling } from "./movement";
 import { io, Socket } from "socket.io-client";
+import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 
 export let mixerList: any = [];
+export let currentPlayer: Player;
 class Player {
   id: string;
-  model: THREE.Object3D;
-  modelHead: THREE.Object3D | null;
   hp: number;
+  targetable: boolean;
+  model: THREE.Object3D;
+  pos: THREE.Vector3;
+  rot: THREE.Quaternion;
+  weapon: THREE.Object3D;
   mixer: THREE.AnimationMixer;
   next: Player | null;
 
-  constructor(id: string, robot: any) {
+  constructor(id: string, pos: THREE.Vector3, rot: THREE.Quaternion) {
     this.id = id;
-    this.model = robot.clone(true); //new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 1 ), new THREE.MeshBasicMaterial( {color: 0xbbbbbb} ) );
-    this.modelHead = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 1, 1),
-      new THREE.MeshBasicMaterial({ color: 0xbbbbbb })
-    ); //this.model.getObjectByName("Head") as THREE.Object3D;
     this.hp = 100;
+    this.targetable = true;
+    this.model = SkeletonUtils.clone(model);
+    this.model.scale.setScalar(0.0025);
+    this.pos = this.model.position.set(pos.x, pos.y, pos.z);
+    this.rot = this.model.quaternion.set(rot.x, rot.y, rot.z, rot.w);
+    scene.add(this.model);
+    this.weapon = weapon;
+    this.model.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        this.weapon = child;
+      }
+    });
+    //this.weapon = weapon;
     this.mixer = new THREE.AnimationMixer(this.model);
-    //this.mixer.clipAction(animations[2]).play();
+
     mixerList.push(this.mixer);
     this.next = null;
-    scene.add(this.model);
   }
 
   destroy(): void {
@@ -44,8 +55,8 @@ class LinkedList {
     this.size = 0;
   }
 
-  add(id: string, robot: THREE.Object3D): void {
-    const player = new Player(id, robot);
+  add(id: string, pos: THREE.Vector3, rot: THREE.Quaternion): void {
+    const player = new Player(id, pos, rot);
     let current: Player | null;
     if (this.head == null) {
       this.head = player;
@@ -57,6 +68,7 @@ class LinkedList {
       current.next = player;
     }
     this.size++;
+    if (client.id === id) currentPlayer = player;
   }
 
   remove(id: string): void {
@@ -87,14 +99,13 @@ class LinkedList {
       }
       current = current.next;
     }
-    //console.log("Player not found");
     return null;
   }
 
-  copy(list: LinkedList, robot: THREE.Object3D): void {
+  copy(list: LinkedList): void {
     let serverCurrent: Player | null = list.head;
     while (serverCurrent != null) {
-      this.add(serverCurrent.id, robot);
+      this.add(serverCurrent.id, serverCurrent.pos, serverCurrent.rot);
       serverCurrent = serverCurrent.next;
     }
   }
@@ -102,52 +113,60 @@ class LinkedList {
   print(): void {
     let current: Player | null = this.head;
     while (current != null) {
-      console.log(current.id);
       current = current.next;
     }
   }
 }
 
-export const client: Socket = io(
-  "https://interactivearchitecturebackend.onrender.com"
-);
 //export const client: Socket = io("localhost:3000");
+export const client: Socket = io(
+  "https://interactivearchitecturebackend.onrender.com/"
+);
 export let ready: boolean = false;
 export let playerListSize: number = 0;
 export let playerList: LinkedList = new LinkedList();
-
-loadRobot()
-  .then((robot: any) => {
-    client.emit("player ready");
+loadModel()
+  .then((model: any) => {
     playerListSize = playerList.size;
-    socketFunctions(playerList, robot);
+    client.emit("player ready"); //player ready
+    //get player list from server
+    client.on("transfer list", (serverList: LinkedList) => {
+      playerList.copy(serverList);
+      ready = true;
+    });
+
+    socketFunctions(playerList);
   })
   .catch((error: any) => {
-    console.error("Error loading robot:", error);
+    console.error("Error loading model:", error);
   });
 
-export function socketFunctions(
-  playerList: LinkedList,
-  robot: THREE.Object3D
-): void {
-  client.on("transfer list", (serverList: LinkedList) => {
-    playerList.copy(serverList, robot);
-    ready = true;
-  });
+export function socketFunctions(playerList: LinkedList): void {
+  // when a new player joins
+  client.on(
+    "new player",
+    (id: string, pos: THREE.Vector3, rot: THREE.Quaternion) => {
+      if (ready) {
+        playerList.add(id, pos, rot);
 
-  client.on("new player", (id: string) => {
-    playerList.add(id, robot);
-    client.emit(
-      "give state",
-      { x: camera.position.x, y: camera.position.y, z: camera.position.z },
-      {
-        x: camera.quaternion.x,
-        y: camera.quaternion.y,
-        z: camera.quaternion.z,
-      },
-      id
-    );
-  });
+        // send the new player the current state of this player
+        client.emit(
+          "give state",
+          {
+            x: currentPlayer.model.position.x,
+            y: currentPlayer.model.position.y,
+            z: currentPlayer.model.position.z,
+          },
+          {
+            x: currentPlayer.model.quaternion.x,
+            y: currentPlayer.model.quaternion.y,
+            z: currentPlayer.model.quaternion.z,
+          },
+          id
+        );
+      }
+    }
+  );
 
   client.on(
     "set state",
@@ -158,16 +177,10 @@ export function socketFunctions(
     ) => {
       let player: Player | null = playerList.find(id);
       if (player) {
-        player.model.position.set(pos.x, pos.y - constant.modelHeight, pos.z);
+        player.model.position.set(pos.x, pos.y, pos.z);
         let quaternion = new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w);
         let yaw = getYawRotation(quaternion);
-        let pitch = getPitchRotation(
-          new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w)
-        );
         player.model.quaternion.set(yaw.x, yaw.y, yaw.z, yaw.w);
-        if (player.modelHead) {
-          player.modelHead.quaternion.set(pitch.x, pitch.y, pitch.z, pitch.w);
-        }
       }
     }
   );
@@ -178,12 +191,7 @@ export function socketFunctions(
       if (ready) {
         const player: Player | null = playerList.find(id);
         if (player) {
-          player.model.position.set(pos.x, pos.y - constant.modelHeight, pos.z);
-          /*if (player.mixer.clipAction(animations[2]).isRunning() == false) {
-                    console.log("Running");
-                    player.mixer.clipAction(animations[2]).stop();
-
-                }*/
+          player.model.position.set(pos.x, pos.y, pos.z);
         }
       }
     }
@@ -201,9 +209,6 @@ export function socketFunctions(
             new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w)
           );
           player.model.quaternion.set(yaw.x, yaw.y, yaw.z, yaw.w);
-          if (player.modelHead) {
-            player.modelHead.quaternion.set(pitch.x, pitch.y, pitch.z, pitch.w);
-          }
         }
       }
     }
@@ -213,32 +218,67 @@ export function socketFunctions(
     if (ready) {
       const player: Player | null = playerList.find(id);
       if (player) {
-        // Handle jump logic here
+        // Jump animation
+      }
+    }
+  });
+
+  client.on("attack animation", (id: string) => {
+    if (ready) {
+      const player: Player | null = playerList.find(id);
+      if (player) {
+        const action = player.mixer.clipAction(player.model.animations[0]);
+
+        action.reset();
+        action.setLoop(THREE.LoopOnce, 1);
+        action.clampWhenFinished = true;
+        action.play();
       }
     }
   });
 
   const hp = document.getElementById("hpIMG") as HTMLElement;
   if (hp) {
-    hp.style.width = hp.style.width || "90%";
+    hp.style.width = hp.style.width || "100%";
   }
-  client.on("loseHP", (hitID) => {
-    if (!dashing) {
-      let playerHit: Player | null = playerList.find(hitID);
-      console.log(playerHit);
-      if (playerHit) {
-        playerHit.hp -= 10;
-        if (hp) {
-          //hp.style.width = "10%";
 
-          const currentWidth = parseFloat(hp.style.width);
-          hp.style.width = `${Math.max(0, currentWidth - 10)}%`;
+  client.on("verify hit", (attackerID: string) => {
+    if (!rolling && currentPlayer.targetable) {
+      let attacker = playerList.find(attackerID);
+      if (attacker) {
+        const attackingWeaponBox = new THREE.Box3();
+        attackingWeaponBox.setFromObject(attacker.weapon);
+
+        const modelBox = new THREE.Box3();
+        modelBox.setFromObject(currentPlayer.model);
+
+        if (modelBox.intersectsBox(attackingWeaponBox)) {
+          currentPlayer.hp -= 10;
+          currentPlayer.targetable = false;
+
+          if (hp) {
+            const currentWidth = parseFloat(hp.style.width);
+            hp.style.width = `${currentPlayer.hp}%`;
+            //hp.style.width = `${Math.max(0, currentWidth - 10)}%`;
+          }
+          console.log(currentPlayer.hp);
+          if (currentPlayer.hp <= 0) {
+            client.emit("player dead", currentPlayer.id);
+            currentPlayer.destroy();
+          }
         }
       }
     }
   });
 
-  client.on("removePlayer", (id: string) => {
+  client.on("switch targetable", (targetID: string) => {
+    let target = playerList.find(targetID);
+    if (target) {
+      target.targetable = true;
+    }
+  });
+
+  client.on("remove player", (id: string) => {
     playerList.remove(id);
   });
 }

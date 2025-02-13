@@ -1,29 +1,14 @@
 import * as THREE from "three";
 import { camera, scene, mobile } from "./setup";
 import { floorGrid, wallGrid, getObjectsInCell } from "./spatiParti";
-import { applyQuaternion, clamp } from "./utils";
-import { client, ready, playerList } from "./socket";
-import { loadRobot, animations } from "./loaders";
+import { clamp, getPitchRotation, getYawRotation } from "./utils";
+import { client, ready, playerList, currentPlayer } from "./socket";
 import * as constant from "./constants";
 import nipplejs from "nipplejs";
 import screenfull from "screenfull";
-import { Socket } from "socket.io-client";
 
 let isJumping = false;
 let jumpHeight = 0;
-let robot: any = null;
-let loaded = false;
-/*
-loadRobot().then(robotLoaded => {
-    robot=(robotLoaded as THREE.Object3D).clone(true)
-    loaded = true;
-    robot.position.set(5,1,5)
-    console.log(robot);
-    scene.add(robot);
-}).catch((error: any) => {
-    console.error("Error loading robot:", error);
-});
-*/
 
 // movement
 let movementBool: [boolean, boolean, boolean, boolean, boolean, boolean] = [
@@ -51,7 +36,7 @@ let mobileMove: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
 let phi: number = 0;
 let theta: number = 0;
 
-let quat: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1);
+export let quat: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1);
 let quatX: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1);
 let quatZ: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1);
 
@@ -61,35 +46,32 @@ let movementTouchId: number | null = null;
 // mobile
 let previousTouch: Touch | null;
 let jumpPressed: boolean = false;
-export let dashing: boolean = false;
-let dashReady: boolean = true;
-let dashLength: number = 50;
-let dashingTimer: number = dashLength;
-let dashCD: number = 100;
+export let rolling: boolean = false;
+let rollReady: boolean = true;
+let rollLength: number = 100;
+let rollingTimer: number = rollLength;
+let rollCD: number = 100;
+let rollDirection: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
 
 export function PCMovement(delta: number) {
   let speed = 5 * delta;
   let inputAmount = 0;
   let movement = new THREE.Vector3(0, 0, 0);
 
-  if (dashingTimer <= 0) {
-    dashing = false;
-    if (dashingTimer <= -dashCD) {
-      dashReady = true;
-      dashingTimer = dashLength;
+  if (rollingTimer <= 0) {
+    rolling = false;
+    if (rollingTimer <= -rollCD) {
+      rollReady = true;
+      rollingTimer = rollLength;
     }
   }
-  if (movementBool[5] && dashReady && !isJumping) {
-    dashing = true;
-    dashReady = false;
+  if (movementBool[5] && rollReady && !isJumping) {
+    rolling = true;
+    rollReady = false;
   }
-  if (dashing) {
-    speed = speed * 2;
+  if (rolling) {
+    speed = speed / 2;
   }
-  if (!dashReady) {
-    dashingTimer--;
-  }
-
   for (let i = 0; i < 4; i++) {
     movementVector[i].set(0, 0, 0);
 
@@ -99,15 +81,21 @@ export function PCMovement(delta: number) {
         constant.movementDir[i].y * speed,
         constant.movementDir[i].z * speed
       );
-      movementVector[i] = applyQuaternion(movementVector[i], quatX);
+      movementVector[i] = movementVector[i].applyQuaternion(
+        getYawRotation(quat)
+      );
       movementVector[i].y = 0;
       inputAmount++;
     }
   }
+  if (!rollReady) {
+    rollingTimer--;
+  }
+
   if (movementBool[4] && !isJumping) {
     isJumping = true;
     jumpHeight = 0.05;
-    client.emit("player jump", camera.position);
+    client.emit("player jump", currentPlayer.model.position);
   }
 
   if (inputAmount > 0) {
@@ -115,16 +103,19 @@ export function PCMovement(delta: number) {
     for (let i = 0; i < 4; i++) {
       totDir.add(movementVector[i].clone());
     }
+
     movement = totDir.divideScalar(Math.sqrt(inputAmount));
   }
 
   let wallHit = collision(delta, movement);
-  if (!wallHit) {
-    camera.position.add(movement);
+  if (!wallHit && !movement.equals(new THREE.Vector3(0, 0, 0))) {
+    currentPlayer.model.position.add(movement);
+    //currentPlayer.model.quaternion.copy(getYawRotation(quat));
+
     client.emit("player position", {
-      x: camera.position.x,
-      y: camera.position.y,
-      z: camera.position.z,
+      x: currentPlayer.model.position.x,
+      y: currentPlayer.model.position.y,
+      z: currentPlayer.model.position.z,
     });
   }
 }
@@ -134,16 +125,16 @@ export function mobileMovement(delta: number) {
   if (jumpPressed && !isJumping) {
     isJumping = true;
     jumpHeight = 0.05;
-    client.emit("player jump", camera.position);
+    client.emit("player jump", currentPlayer.model.position);
   }
 
   let wallHit = collision(delta, mobileMove);
   if (!wallHit) {
-    camera.position.add(mobileMove);
+    currentPlayer.model.position.add(mobileMove);
     client.emit("player position", {
-      x: camera.position.x,
-      y: camera.position.y,
-      z: camera.position.z,
+      x: currentPlayer.model.position.x,
+      y: currentPlayer.model.position.y,
+      z: currentPlayer.model.position.z,
     });
   }
   jumpPressed = false;
@@ -151,14 +142,14 @@ export function mobileMovement(delta: number) {
 
 function collision(delta: number, moveDir: THREE.Vector3) {
   let currentCell = new THREE.Vector3(
-    camera.position.x,
-    camera.position.y,
-    camera.position.z
+    currentPlayer.model.position.x,
+    currentPlayer.model.position.y,
+    currentPlayer.model.position.z
   );
 
   // FLOOR COLLISION DETECTION
   let downRay = new THREE.Raycaster(
-    camera.position,
+    currentPlayer.model.position,
     new THREE.Vector3(0, -1, 0),
     0,
     5
@@ -172,26 +163,30 @@ function collision(delta: number, moveDir: THREE.Vector3) {
   let closestFloor = closestFloorInfo[1];
 
   // JUMPING
-  let feetToFloorDistance = distanceToFloor - constant.modelHeight;
   if (isJumping) {
     jumpHeight -= delta * 0.15;
-    camera.position.y += jumpHeight;
-    if (feetToFloorDistance + jumpHeight < 0.01) {
+    currentPlayer.model.position.y += jumpHeight;
+    if (distanceToFloor < 0.1) {
       isJumping = false;
       jumpHeight = 0;
     }
   } else if (closestFloor) {
-    if (constant.modelHeight - distanceToFloor > 0) {
-      camera.position.y += constant.modelHeight - distanceToFloor;
+    if (distanceToFloor < 0.01) {
+      currentPlayer.model.position.y += distanceToFloor;
     } else {
-      camera.position.y -= distanceToFloor - constant.modelHeight;
+      //currentPlayer.model.position.y -= distanceToFloor - 0;
     }
   } else {
     isJumping = true;
   }
 
   // WALL COLLISION DETECTION
-  let forwardRay = new THREE.Raycaster(camera.position, moveDir, 0, 5);
+  let forwardRay = new THREE.Raycaster(
+    currentPlayer.model.position,
+    moveDir,
+    0,
+    5
+  );
   forwardRay.layers.set(1);
 
   let closestWallInfo = findClosestObject(currentCell, wallGrid, forwardRay);
@@ -254,7 +249,7 @@ if (!mobile) {
       quatZ.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta);
 
       quat = quatX.multiply(quatZ);
-
+      currentPlayer.model.quaternion.copy(getYawRotation(quat));
       camera.quaternion.copy(quat);
 
       if (ready) {
@@ -376,7 +371,7 @@ if (!mobile) {
         let xDir = data.vector.x;
         let zDir = -data.vector.y;
         let dir = new THREE.Vector3(xDir * 0.05, 0, zDir * 0.05);
-        mobileMove = applyQuaternion(dir, quatX);
+        mobileMove = dir.applyQuaternion(quatX);
       });
 
       joystickL.get(0).on("end", (evt, data) => {
@@ -404,32 +399,3 @@ if (!mobile) {
     }
   }
 }
-
-let raycaster = new THREE.Raycaster();
-document.addEventListener("mousedown", (e) => {
-  raycaster.setFromCamera(new THREE.Vector2(), camera);
-  raycaster.far = 2;
-  let current: any = playerList.head;
-  while (current != null) {
-    if (current.id === client.id) {
-      current = current.next;
-    } else {
-      const intersections = raycaster.intersectObject(current.model, true);
-      if (intersections.length > 0) {
-        client.emit("hit", current.id);
-        break;
-      } else {
-        current = current.next;
-      }
-    }
-  }
-});
-
-/*scene.add(
-    new THREE.ArrowHelper(
-      raycaster.ray.direction,
-      raycaster.ray.origin,
-      2,
-      0xff0000
-    )
-  );*/

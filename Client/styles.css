@@ -101,13 +101,17 @@
   width: 40%;
   height: 50%;
 }
-
-#hpIMG {
+#hp {
   position: absolute;
+  width: 30%;
   margin-left: 5%;
   margin-top: 1%;
-  width: 30%;
-  height: 2%;
+  height: 3%;
+}
+#hpIMG {
+  position: absolute;
+  height: 100%;
+  width: 100%;
 }
 
 #midDot {
