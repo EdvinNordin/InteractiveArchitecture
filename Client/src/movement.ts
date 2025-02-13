@@ -3,6 +3,7 @@ import { camera, scene, mobile } from "./setup";
 import { floorGrid, wallGrid, getObjectsInCell } from "./spatiParti";
 import { clamp, getPitchRotation, getYawRotation } from "./utils";
 import { client, ready, playerList, currentPlayer } from "./socket";
+import { animations } from "./loaders";
 import * as constant from "./constants";
 import nipplejs from "nipplejs";
 import screenfull from "screenfull";
@@ -107,32 +108,19 @@ export function PCMovement(delta: number) {
 
       // running animation
       if (
-        !currentPlayer.mixer
-          .clipAction(currentPlayer.model.animations[1])
-          .isRunning() &&
-        !currentPlayer.mixer
-          .clipAction(currentPlayer.model.animations[2])
-          .isRunning()
+        !currentPlayer.mixer.clipAction(animations[1]).isRunning() &&
+        !currentPlayer.mixer.clipAction(animations[2]).isRunning()
       ) {
-        client.emit("position animation", {});
-        const action = currentPlayer.mixer.clipAction(
-          currentPlayer.model.animations[1]
-        );
+        const action = currentPlayer.mixer.clipAction(animations[1]);
 
+        client.emit("position animation", {});
         currentPlayer.mixer.stopAllAction();
         action.play();
       }
-    } else if (
-      !currentPlayer.mixer
-        .clipAction(currentPlayer.model.animations[2])
-        .isRunning()
-    ) {
-      const action = currentPlayer.mixer.clipAction(
-        currentPlayer.model.animations[0]
-      );
+    } else if (!currentPlayer.mixer.clipAction(animations[2]).isRunning()) {
+      const idle = currentPlayer.mixer.clipAction(animations[0]);
       currentPlayer.mixer.stopAllAction();
-      //action.setLoop(THREE.LoopOnce, 1);
-      action.play();
+      idle.play();
     }
   }
   // start rolling
@@ -141,13 +129,11 @@ export function PCMovement(delta: number) {
     rollReady = false;
     movement.multiplyScalar(0.5);
     client.emit("player roll", {});
-    const action = currentPlayer.mixer.clipAction(
-      currentPlayer.model.animations[3]
-    );
-    action.timeScale = 1.5; // Increase the speed of the animation
+    const roll = currentPlayer.mixer.clipAction(animations[3]);
+    roll.timeScale = 1.5;
     currentPlayer.mixer.stopAllAction();
-    action.setLoop(THREE.LoopOnce, 1);
-    action.play();
+    roll.setLoop(THREE.LoopOnce, 1);
+    roll.play();
   }
 
   let wallHit = collision(delta, movement);
@@ -207,6 +193,12 @@ function collision(delta: number, moveDir: THREE.Vector3) {
   if (isJumping) {
     jumpHeight -= delta * 0.15;
     currentPlayer.model.position.y += jumpHeight;
+    // client.emit("position animation", {});
+    client.emit("player position", {
+      x: currentPlayer.model.position.x,
+      y: currentPlayer.model.position.y,
+      z: currentPlayer.model.position.z,
+    });
     if (distanceToFloor < 0.1) {
       isJumping = false;
       jumpHeight = 0;

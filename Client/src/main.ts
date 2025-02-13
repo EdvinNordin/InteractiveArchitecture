@@ -6,6 +6,7 @@ import { floorGrid, wallGrid } from "./spatiParti";
 import { loadModels } from "./loaders";
 import { PCMovement, mobileMovement, quat } from "./movement";
 import { hit } from "./combat";
+import { animations } from "./loaders";
 import { client, ready, currentPlayer, playerList } from "./socket";
 
 loadModels(floorGrid, wallGrid);
@@ -63,14 +64,14 @@ function updateMixers(delta: number) {
   let current: any = playerList.head;
   while (current != null) {
     let anyAnimationRunning = false;
-    for (let i = 0; i < current.model.animations.length; i++) {
-      if (current.mixer.clipAction(current.model.animations[i]).isRunning()) {
+    for (let i = 0; i < animations.length; i++) {
+      if (current.mixer.clipAction(animations[i]).isRunning()) {
         anyAnimationRunning = true;
         break;
       }
     }
     if (!anyAnimationRunning) {
-      current.mixer.clipAction(current.model.animations[0]).play();
+      current.mixer.clipAction(animations[0]).play();
     }
     current.mixer.update(delta);
     current = current.next;

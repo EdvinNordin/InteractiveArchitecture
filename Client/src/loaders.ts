@@ -7,31 +7,6 @@ import { Rhino3dmLoader } from "three/examples/jsm/loaders/3DMLoader";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 
 export let animations: any = [];
-
-/*export function loadModel() {
-  return new Promise((resolve, reject) => {
-    new GLTFLoader().load(
-      //"./paladino2.glb",
-      "./selfRigged.glb",
-      function (gltf: { scene: any; animations: any }) {
-        let model = gltf.scene;
-        animations = gltf.animations;
-        console.log(model);
-        //scene.add(model);
-        resolve(model);
-      },
-      function (xhr: { loaded: number; total: number }) {
-        if ((xhr.loaded / xhr.total) * 100 === 100) {
-          // Loading complete
-        }
-      },
-      function (error: any) {
-        console.log(error);
-        reject(error);
-      }
-    );
-  });
-} */
 export let weapon: THREE.Mesh;
 export let model: THREE.Object3D;
 export function loadModel() {
@@ -67,6 +42,7 @@ export function loadModel() {
         animLoader.load("rollAnim.fbx", (anim) => {
           anim.animations[0].name = "roll";
           object.animations.push(...anim.animations);
+          animations = object.animations;
           model = object;
           resolve(object);
         });
@@ -82,6 +58,30 @@ export function loadModel() {
   });
 }
 
+/*export function loadModel() {
+  return new Promise((resolve, reject) => {
+    new GLTFLoader().load(
+      //"./paladino2.glb",
+      "./selfRigged.glb",
+      function (gltf: { scene: any; animations: any }) {
+        let model = gltf.scene;
+        animations = gltf.animations;
+        console.log(model);
+        //scene.add(model);
+        resolve(model);
+      },
+      function (xhr: { loaded: number; total: number }) {
+        if ((xhr.loaded / xhr.total) * 100 === 100) {
+          // Loading complete
+        }
+      },
+      function (error: any) {
+        console.log(error);
+        reject(error);
+      }
+    );
+  });
+} */
 export function loadModels(
   floorGrid: { [key: string]: THREE.Object3D[] },
   wallGrid: { [key: string]: THREE.Object3D[] }

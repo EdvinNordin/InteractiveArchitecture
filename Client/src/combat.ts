@@ -1,18 +1,15 @@
 import * as THREE from "three";
 import { client, playerList, currentPlayer } from "./socket";
+import { animations } from "./loaders";
 
 document.addEventListener("mousedown", (e) => {
   if (document.pointerLockElement === document.body) {
     if (
-      currentPlayer.model.animations &&
-      !currentPlayer.mixer
-        .clipAction(currentPlayer.model.animations[2])
-        .isRunning()
+      animations &&
+      !currentPlayer.mixer.clipAction(animations[2]).isRunning()
     ) {
       client.emit("attacking", currentPlayer.id);
-      const action = currentPlayer.mixer.clipAction(
-        currentPlayer.model.animations[2]
-      );
+      const action = currentPlayer.mixer.clipAction(animations[2]);
       currentPlayer.mixer.stopAllAction();
       action.setLoop(THREE.LoopOnce, 1);
       action.play();

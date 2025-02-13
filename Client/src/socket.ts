@@ -36,7 +36,7 @@ class Player {
     });
     //this.weapon = weapon;
     this.mixer = new THREE.AnimationMixer(this.model);
-    this.mixer.clipAction(this.model.animations[0]).play();
+    this.mixer.clipAction(animations[0]).play();
 
     mixerList.push(this.mixer);
     this.next = null;
@@ -202,7 +202,7 @@ export function socketFunctions(playerList: LinkedList): void {
     if (ready) {
       const player: Player | null = playerList.find(id);
       if (player) {
-        const action = player.mixer.clipAction(player.model.animations[1]);
+        const action = player.mixer.clipAction(animations[1]);
         player.mixer.stopAllAction();
         action.setLoop(THREE.LoopOnce, 1);
         action.play();
@@ -240,7 +240,7 @@ export function socketFunctions(playerList: LinkedList): void {
     if (ready) {
       const player: Player | null = playerList.find(id);
       if (player) {
-        const action = player.mixer.clipAction(player.model.animations[3]);
+        const action = player.mixer.clipAction(animations[3]);
         player.mixer.stopAllAction();
         action.setLoop(THREE.LoopOnce, 1);
         action.play();
@@ -252,7 +252,7 @@ export function socketFunctions(playerList: LinkedList): void {
     if (ready) {
       const player: Player | null = playerList.find(id);
       if (player) {
-        const action = player.mixer.clipAction(player.model.animations[2]);
+        const action = player.mixer.clipAction(animations[2]);
         player.mixer.stopAllAction();
         action.setLoop(THREE.LoopOnce, 1);
         action.play();
