@@ -29,20 +29,22 @@ export function loadModel() {
         const animLoader = new FBXLoader();
         animLoader.load("idleAnim.fbx", (anim) => {
           anim.animations[0].name = "idle";
-          object.animations = anim.animations;
+          animations[0] = anim.animations[0];
         });
         animLoader.load("runAnim.fbx", (anim) => {
           anim.animations[0].name = "run";
-          object.animations.push(...anim.animations);
+          //object.animations.push(...anim.animations);
+          animations[1] = anim.animations[0];
         });
         animLoader.load("attackAnim.fbx", (anim) => {
           anim.animations[0].name = "attack";
-          object.animations.push(...anim.animations);
+          //object.animations.push(...anim.animations);
+          animations[2] = anim.animations[0];
         });
         animLoader.load("rollAnim.fbx", (anim) => {
           anim.animations[0].name = "roll";
-          object.animations.push(...anim.animations);
-          animations = object.animations;
+          //object.animations.push(...anim.animations);
+          animations[3] = anim.animations[0];
           model = object;
           resolve(object);
         });
