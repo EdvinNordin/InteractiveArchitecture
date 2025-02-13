@@ -121,7 +121,7 @@ class LinkedList {
 
 //export const client: Socket = io("localhost:3000");
 export const client: Socket = io(
-  "https://interactivearchitecturebackend.onrender.com/"
+  "https://interactivearchitecturebackend.onrender.com"
 );
 export let ready: boolean = false;
 export let playerListSize: number = 0;
