@@ -49,7 +49,7 @@ let previousTouch: Touch | null;
 let jumpPressed: boolean = false;
 export let rolling: boolean = false;
 let rollReady: boolean = true;
-let rollLength: number = 100;
+let rollLength: number = 150;
 let rollingTimer: number = rollLength;
 let rollCD: number = 100;
 let movement = new THREE.Vector3(0, 0, 0);
@@ -106,8 +106,13 @@ export function PCMovement(delta: number) {
       }
       movement = totDir.divideScalar(Math.sqrt(inputAmount));
 
-      //roatate the model to the direction of movement
-      currentPlayer.model.rotation.y = Math.atan2(-movement.x, -movement.z);
+      //rotate the model to the direction of movement
+      const moveDirection = movement.clone().normalize();
+      const targetQuaternion = new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, 0, -1),
+        moveDirection
+      );
+      currentPlayer.model.quaternion.copy(targetQuaternion);
       client.emit("player rotation", {
         x: currentPlayer.model.quaternion.x,
         y: currentPlayer.model.quaternion.y,
@@ -133,22 +138,16 @@ export function PCMovement(delta: number) {
 
   // start rolling
   if (movementBool[5] && rollReady && !isJumping) {
+    currentPlayer.animation = "roll";
     rolling = true;
     rollReady = false;
     movement.multiplyScalar(0.5);
-
-    currentPlayer.animation = "roll";
-    //client.emit("player roll", {});
-    // const roll = currentPlayer.mixer.clipAction(animations[3]);
-    // roll.timeScale = 1.5;
-    // currentPlayer.mixer.stopAllAction();
-    // roll.setLoop(THREE.LoopOnce, 1);
-    // roll.play();
   }
 
   let wallHit = collision(delta, movement);
   if (!wallHit && !movement.equals(new THREE.Vector3(0, 0, 0))) {
     currentPlayer.model.position.add(movement);
+    //currentPlayer.model.quaternion.copy(getYawRotation(quat));
     client.emit("player position", {
       x: currentPlayer.model.position.x,
       y: currentPlayer.model.position.y,
@@ -292,19 +291,10 @@ if (!mobile) {
       quatZ.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta);
 
       quat = quatX.multiply(quatZ);
-      //currentPlayer.model.quaternion.copy(getYawRotation(quat));
       camera.quaternion.copy(quat);
-      /*
-      if (ready) {
-        client.emit("player rotation", {
-          x: quat.x,
-          y: quat.y,
-          z: quat.z,
-          w: quat.w,
-        });
-      }*/
     }
   });
+
   // MOVEMENT
   document.addEventListener("keydown", (e) => {
     if (document.pointerLockElement === document.body) {

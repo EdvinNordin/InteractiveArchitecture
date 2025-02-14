@@ -3,7 +3,7 @@ import { client, playerList, currentPlayer } from "./socket";
 import { animations } from "./loaders";
 import { quat } from "./movement";
 import { getYawRotation } from "./utils";
-import { camera } from "./setup";
+import { get } from "http";
 
 document.addEventListener("mousedown", (e) => {
   if (document.pointerLockElement === document.body) {
@@ -11,7 +11,7 @@ document.addEventListener("mousedown", (e) => {
       currentPlayer.animation !== "attack" &&
       currentPlayer.animation !== "roll"
     ) {
-      currentPlayer.model.quaternion.copy(getYawRotation(camera.quaternion));
+      currentPlayer.model.quaternion.copy(getYawRotation(quat));
       client.emit("player rotation", {
         x: currentPlayer.model.quaternion.x,
         y: currentPlayer.model.quaternion.y,

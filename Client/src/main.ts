@@ -108,7 +108,6 @@ function updateMixers(delta: number) {
 function iFrames(delta: number) {
   cd--;
   if (cd < 0) {
-    console.log("i am now targetable");
     currentPlayer.targetable = true;
     client.emit("targetable", currentPlayer.id);
     cd = 300;
@@ -142,7 +141,6 @@ function isAttacking(attacker: any, rolling: boolean) {
         const currentWidth = parseFloat(hp.style.width);
         hp.style.width = `${currentPlayer.hp}%`;
       }
-      console.log(currentPlayer.hp);
       if (currentPlayer.hp <= 0) {
         client.emit("player dead", currentPlayer.id);
         currentPlayer.destroy();
