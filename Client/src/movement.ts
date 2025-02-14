@@ -106,34 +106,44 @@ export function PCMovement(delta: number) {
       }
       movement = totDir.divideScalar(Math.sqrt(inputAmount));
 
+      //roatate the model to the direction of movement
+      currentPlayer.model.rotation.y = Math.atan2(-movement.x, -movement.z);
+      client.emit("player rotation", {
+        x: currentPlayer.model.quaternion.x,
+        y: currentPlayer.model.quaternion.y,
+        z: currentPlayer.model.quaternion.z,
+        w: currentPlayer.model.quaternion.w,
+      });
+
       // running animation
       if (
-        !currentPlayer.mixer.clipAction(animations[1]).isRunning() &&
-        !currentPlayer.mixer.clipAction(animations[2]).isRunning()
+        currentPlayer.animation !== "run" &&
+        currentPlayer.animation !== "roll" &&
+        currentPlayer.animation !== "attack"
       ) {
-        const action = currentPlayer.mixer.clipAction(animations[1]);
-
-        client.emit("position animation", {});
-        currentPlayer.mixer.stopAllAction();
-        action.play();
+        currentPlayer.animation = "run";
       }
-    } else if (!currentPlayer.mixer.clipAction(animations[2]).isRunning()) {
-      const idle = currentPlayer.mixer.clipAction(animations[0]);
-      currentPlayer.mixer.stopAllAction();
-      idle.play();
+    } else if (
+      currentPlayer.animation !== "roll" &&
+      currentPlayer.animation !== "attack"
+    ) {
+      currentPlayer.animation = "idle";
     }
   }
+
   // start rolling
   if (movementBool[5] && rollReady && !isJumping) {
     rolling = true;
     rollReady = false;
     movement.multiplyScalar(0.5);
-    client.emit("player roll", {});
-    const roll = currentPlayer.mixer.clipAction(animations[3]);
-    roll.timeScale = 1.5;
-    currentPlayer.mixer.stopAllAction();
-    roll.setLoop(THREE.LoopOnce, 1);
-    roll.play();
+
+    currentPlayer.animation = "roll";
+    //client.emit("player roll", {});
+    // const roll = currentPlayer.mixer.clipAction(animations[3]);
+    // roll.timeScale = 1.5;
+    // currentPlayer.mixer.stopAllAction();
+    // roll.setLoop(THREE.LoopOnce, 1);
+    // roll.play();
   }
 
   let wallHit = collision(delta, movement);
@@ -282,9 +292,9 @@ if (!mobile) {
       quatZ.setFromAxisAngle(new THREE.Vector3(1, 0, 0), theta);
 
       quat = quatX.multiply(quatZ);
-      currentPlayer.model.quaternion.copy(getYawRotation(quat));
+      //currentPlayer.model.quaternion.copy(getYawRotation(quat));
       camera.quaternion.copy(quat);
-
+      /*
       if (ready) {
         client.emit("player rotation", {
           x: quat.x,
@@ -292,7 +302,7 @@ if (!mobile) {
           z: quat.z,
           w: quat.w,
         });
-      }
+      }*/
     }
   });
   // MOVEMENT

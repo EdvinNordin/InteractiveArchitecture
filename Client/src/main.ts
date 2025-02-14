@@ -4,7 +4,7 @@ import Stats from "three/examples/jsm/libs/stats.module";
 import { camera, scene, renderer, mobile } from "./setup";
 import { floorGrid, wallGrid } from "./spatiParti";
 import { loadModels } from "./loaders";
-import { PCMovement, mobileMovement, quat } from "./movement";
+import { PCMovement, mobileMovement, quat, rolling } from "./movement";
 import { hit } from "./combat";
 import { animations } from "./loaders";
 import { client, ready, currentPlayer, playerList } from "./socket";
@@ -14,8 +14,8 @@ loadModels(floorGrid, wallGrid);
 // stats
 // const stats: Stats = new Stats();
 //document.body.appendChild(stats.dom);
-
 // delta
+let prevAnim: string = "idle";
 let cd: number = 200;
 const clock = new THREE.Clock();
 let delta;
@@ -48,14 +48,9 @@ function updatePlayers(delta: number, ready: boolean) {
           .add(new THREE.Vector3(0, 1, 0).add(currentPlayer.model.position))
       );
     }
-    if (
-      currentPlayer.mixer
-        .clipAction(currentPlayer.model.animations[2])
-        .isRunning()
-    ) {
+    if (currentPlayer.mixer.clipAction(animations[2]).isRunning()) {
       hit();
     }
-
     if (!currentPlayer.targetable) iFrames(delta);
   }
 }
@@ -63,9 +58,55 @@ function updatePlayers(delta: number, ready: boolean) {
 function updateMixers(delta: number) {
   let current: any = playerList.head;
   while (current != null) {
+    if (current === currentPlayer) {
+      const runningActionName = current.mixer._actions.filter((action: any) =>
+        action.isRunning()
+      );
+
+      if (runningActionName.length === 0) {
+        currentPlayer.animation = "idle";
+        client.emit("new animation", currentPlayer.animation);
+        let action = currentPlayer.mixer.clipAction(getAnimationbyName("idle"));
+        action.reset();
+        action.play();
+      } else if (currentPlayer.animation !== prevAnim) {
+        client.emit("new animation", currentPlayer.animation);
+        let action = currentPlayer.mixer.clipAction(
+          getAnimationbyName(currentPlayer.animation)
+        );
+        currentPlayer.mixer.stopAllAction();
+        action.reset();
+        action.play();
+        prevAnim = currentPlayer.animation;
+      }
+    } else {
+      const runningActionName = current.mixer._actions.filter((action: any) =>
+        action.isRunning()
+      );
+      if (runningActionName.length === 0) {
+        current.animation = "idle";
+        let action = current.mixer.clipAction(getAnimationbyName("idle"));
+        action.reset();
+        action.play();
+      } else if (current.animation !== runningActionName[0]._clip.name) {
+        let action = current.mixer.clipAction(
+          getAnimationbyName(current.animation)
+        );
+        current.mixer.stopAllAction();
+        action.reset();
+        action.play();
+      }
+    }
+    current.mixer.update(delta);
+    current = current.next;
+  }
+}
+/* else if (current.animation !== current.mixer._actions[0]._clip.name) {
+        /*
     let anyAnimationRunning = false;
     for (let i = 0; i < animations.length; i++) {
       if (current.mixer.clipAction(animations[i]).isRunning()) {
+        if (i === 2 && current !== currentPlayer) isAttacking(current, rolling);
         anyAnimationRunning = true;
         break;
       }
@@ -73,16 +114,75 @@ function updateMixers(delta: number) {
     if (!anyAnimationRunning) {
       current.mixer.clipAction(animations[0]).play();
     }
-    current.mixer.update(delta);
-    current = current.next;
-  }
-}
+    current.mixer.update(delta);*/
+/*if (
+          current.animation !==
+          currentPlayer.mixer._actions.filter((action: any) =>
+            action.isRunning()
+          )[0]._clip.name
+        ) {
+          current.mixer.stopAllAction();
+          current.animation = current.mixer.clipAction(
+            animations[0]
+          )._clip.name;
+          current.mixer
+            .clipAction(getAnimationbyName(current.animation))
+            .play();
+        }
+      }
+*/
 
 function iFrames(delta: number) {
   cd--;
   if (cd < 0) {
+    console.log("i am now targetable");
     currentPlayer.targetable = true;
     client.emit("targetable", currentPlayer.id);
-    cd = 200;
+    cd = 300;
   }
+}
+
+const hp = document.getElementById("hpIMG") as HTMLElement;
+if (hp) {
+  hp.style.width = hp.style.width || "100%";
+}
+
+function isAttacking(attacker: any, rolling: boolean) {
+  if (!rolling && currentPlayer.targetable) {
+    const attackingWeaponBox = new THREE.Box3();
+    attackingWeaponBox.setFromObject(attacker.weapon);
+
+    const modelBox = new THREE.Box3();
+    modelBox.setFromObject(currentPlayer.model);
+
+    const weaponHelper = new THREE.Box3Helper(attackingWeaponBox, 0xff0000);
+    scene.add(weaponHelper);
+
+    const modelHelper = new THREE.Box3Helper(modelBox, 0xffff00);
+    scene.add(modelHelper);
+    //console.log(modelBox.intersectsBox(attackingWeaponBox));
+
+    if (modelBox.intersectsBox(attackingWeaponBox)) {
+      currentPlayer.hp -= 10;
+      currentPlayer.targetable = false;
+
+      if (hp) {
+        const currentWidth = parseFloat(hp.style.width);
+        hp.style.width = `${currentPlayer.hp}%`;
+      }
+      console.log(currentPlayer.hp);
+      if (currentPlayer.hp <= 0) {
+        client.emit("player dead", currentPlayer.id);
+        currentPlayer.destroy();
+      }
+    }
+  }
+}
+
+function getAnimationbyName(name: string) {
+  for (let i = 0; i < animations.length; i++) {
+    if (animations[i].name === name) return animations[i];
+  }
+  console.log("animation not found");
+  return null;
 }

@@ -161,6 +161,10 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("switch targetable", targetID);
   });
 
+  socket.on("new animation", (animation) => {
+    socket.broadcast.emit("update animation", animation, socket.id);
+  });
+
   socket.on("player dead", () => {
     socket.broadcast.emit("remove player", socket.id);
   });

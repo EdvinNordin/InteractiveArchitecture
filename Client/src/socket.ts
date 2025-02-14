@@ -17,6 +17,7 @@ class Player {
   rot: THREE.Quaternion;
   weapon: THREE.Object3D;
   mixer: THREE.AnimationMixer;
+  animation: string;
   next: Player | null;
 
   constructor(id: string, pos: THREE.Vector3, rot: THREE.Quaternion) {
@@ -37,8 +38,10 @@ class Player {
     //this.weapon = weapon;
     this.mixer = new THREE.AnimationMixer(this.model);
     this.mixer.clipAction(animations[0]).play();
-
+    this.animation = "idle";
     mixerList.push(this.mixer);
+    this.mixer.clipAction(animations[2]).setLoop(THREE.LoopOnce, 1);
+    this.mixer.clipAction(animations[3]).setLoop(THREE.LoopOnce, 1);
     this.next = null;
   }
 
@@ -254,28 +257,42 @@ export function socketFunctions(playerList: LinkedList): void {
       if (player) {
         const action = player.mixer.clipAction(animations[2]);
         player.mixer.stopAllAction();
-        action.setLoop(THREE.LoopOnce, 1);
+        //action.setLoop(THREE.LoopOnce, 1);
         action.play();
       }
     }
   });
 
-  const hp = document.getElementById("hpIMG") as HTMLElement;
-  if (hp) {
-    hp.style.width = hp.style.width || "100%";
-  }
+  client.on("update animation", (animation: string, id: string) => {
+    if (ready) {
+      const player: Player | null = playerList.find(id);
+      if (player) {
+        player.animation = animation;
+      }
+    }
+  });
 
+  /*
   client.on("verify hit", (attackerID: string) => {
+    console.log("i got hit");
     if (!rolling && currentPlayer.targetable) {
       let attacker = playerList.find(attackerID);
       if (attacker) {
-        const attackingWeaponBox = new THREE.Box3();
+        /*const attackingWeaponBox = new THREE.Box3();
         attackingWeaponBox.setFromObject(attacker.weapon);
 
         const modelBox = new THREE.Box3();
         modelBox.setFromObject(currentPlayer.model);
 
-        if (modelBox.intersectsBox(attackingWeaponBox)) {
+        const weaponHelper = new THREE.Box3Helper(attackingWeaponBox, 0xff0000);
+        scene.add(weaponHelper);
+
+        const modelHelper = new THREE.Box3Helper(modelBox, 0xffff00);
+        scene.add(modelHelper);
+        //console.log(modelBox.intersectsBox(attackingWeaponBox));
+
+        //if (modelBox.intersectsBox(attackingWeaponBox)) {
+        if (true) {
           currentPlayer.hp -= 10;
           currentPlayer.targetable = false;
 
@@ -292,7 +309,7 @@ export function socketFunctions(playerList: LinkedList): void {
       }
     }
   });
-
+*/
   client.on("switch targetable", (targetID: string) => {
     let target = playerList.find(targetID);
     if (target) {

@@ -1,39 +1,26 @@
 import * as THREE from "three";
 import { client, playerList, currentPlayer } from "./socket";
 import { animations } from "./loaders";
+import { quat } from "./movement";
+import { getYawRotation } from "./utils";
+import { camera } from "./setup";
 
 document.addEventListener("mousedown", (e) => {
   if (document.pointerLockElement === document.body) {
     if (
-      animations &&
-      !currentPlayer.mixer.clipAction(animations[2]).isRunning()
+      currentPlayer.animation !== "attack" &&
+      currentPlayer.animation !== "roll"
     ) {
-      client.emit("attacking", currentPlayer.id);
-      const action = currentPlayer.mixer.clipAction(animations[2]);
-      currentPlayer.mixer.stopAllAction();
-      action.setLoop(THREE.LoopOnce, 1);
-      action.play();
+      currentPlayer.model.quaternion.copy(getYawRotation(camera.quaternion));
+      client.emit("player rotation", {
+        x: currentPlayer.model.quaternion.x,
+        y: currentPlayer.model.quaternion.y,
+        z: currentPlayer.model.quaternion.z,
+        w: currentPlayer.model.quaternion.w,
+      });
+      currentPlayer.animation = "attack";
     }
   }
 });
 
-export function hit() {
-  const weaponBox = new THREE.Box3();
-  weaponBox.setFromObject(currentPlayer.weapon);
-  let current: any = playerList.head;
-  while (current != null) {
-    if (current.id === currentPlayer.id || !current.targetable) {
-      current = current.next;
-    } else {
-      const enemyBox = new THREE.Box3();
-      enemyBox.setFromObject(current.model);
-      if (weaponBox.intersectsBox(enemyBox)) {
-        client.emit("check hit", currentPlayer.id, current.id);
-        current.targetable = false;
-        break;
-      } else {
-        current = current.next;
-      }
-    }
-  }
-}
+export function hit() {}
