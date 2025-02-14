@@ -8,15 +8,17 @@ import { PCMovement, mobileMovement, quat, rolling } from "./movement";
 import { hit } from "./combat";
 import { animations } from "./loaders";
 import { client, ready, currentPlayer, playerList } from "./socket";
+import { randInt } from "three/src/math/MathUtils";
 
 loadModels(floorGrid, wallGrid);
 
 // stats
 // const stats: Stats = new Stats();
 //document.body.appendChild(stats.dom);
-// delta
+hit();
 let prevAnim: string = "idle";
 let cd: number = 200;
+let respawnTimer: number = 500;
 const clock = new THREE.Clock();
 let delta;
 // ANIMATION LOOP ######################################################################
@@ -48,13 +50,20 @@ function updatePlayers(delta: number, ready: boolean) {
           .add(new THREE.Vector3(0, 1, 0).add(currentPlayer.model.position))
       );
     }
-    if (currentPlayer.mixer.clipAction(animations[2]).isRunning()) {
-      hit();
-    }
     if (!currentPlayer.targetable) iFrames(delta);
+    if (currentPlayer.hp <= 0) {
+      respawnTimer--;
+      if (respawnTimer < 0) {
+        currentPlayer.model.position.set(randInt(-5, 5), 0.01, randInt(-5, 5));
+        document.getElementById("hpIMG")!.style.width = "100%";
+        scene.add(currentPlayer.model);
+        client.emit("player respawn", currentPlayer.model.position);
+        currentPlayer.hp = 100;
+        respawnTimer = 500;
+      }
+    }
   }
 }
-
 function updateMixers(delta: number) {
   let current: any = playerList.head;
   while (current != null) {
@@ -115,9 +124,6 @@ function iFrames(delta: number) {
 }
 
 const hp = document.getElementById("hpIMG") as HTMLElement;
-if (hp) {
-  hp.style.width = hp.style.width || "100%";
-}
 
 function isAttacking(attacker: any, rolling: boolean) {
   if (!rolling && currentPlayer.targetable) {
@@ -127,23 +133,17 @@ function isAttacking(attacker: any, rolling: boolean) {
     const modelBox = new THREE.Box3();
     modelBox.setFromObject(currentPlayer.model);
 
-    const weaponHelper = new THREE.Box3Helper(attackingWeaponBox, 0xff0000);
-    //scene.add(weaponHelper);
-
-    const modelHelper = new THREE.Box3Helper(modelBox, 0xffff00);
-    //scene.add(modelHelper);
-
     if (modelBox.intersectsBox(attackingWeaponBox)) {
-      currentPlayer.hp -= 10;
+      currentPlayer.hp -= 40;
       currentPlayer.targetable = false;
 
       if (hp) {
-        const currentWidth = parseFloat(hp.style.width);
+        if (currentPlayer.hp < 0) currentPlayer.hp = 0;
         hp.style.width = `${currentPlayer.hp}%`;
       }
       if (currentPlayer.hp <= 0) {
         client.emit("player dead", currentPlayer.id);
-        currentPlayer.destroy();
+        scene.remove(currentPlayer.model);
       }
     }
   }

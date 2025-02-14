@@ -6,6 +6,11 @@ import { rolling } from "./movement";
 import { io, Socket } from "socket.io-client";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 
+//export const client: Socket = io("localhost:3000");
+export const client: Socket = io(
+  "https://interactivearchitecturebackend.onrender.com"
+);
+
 export let mixerList: any = [];
 export let currentPlayer: Player;
 class Player {
@@ -122,10 +127,6 @@ class LinkedList {
   }
 }
 
-//export const client: Socket = io("localhost:3000");
-export const client: Socket = io(
-  "https://interactivearchitecturebackend.onrender.com"
-);
 export let ready: boolean = false;
 export let playerListSize: number = 0;
 export let playerList: LinkedList = new LinkedList();
@@ -201,18 +202,6 @@ export function socketFunctions(playerList: LinkedList): void {
     }
   );
 
-  client.on("update position animation", (id: string) => {
-    if (ready) {
-      const player: Player | null = playerList.find(id);
-      if (player) {
-        const action = player.mixer.clipAction(animations[1]);
-        player.mixer.stopAllAction();
-        action.setLoop(THREE.LoopOnce, 1);
-        action.play();
-      }
-    }
-  });
-
   client.on(
     "update rotation",
     (rot: { x: number; y: number; z: number; w: number }, id: string) => {
@@ -230,39 +219,6 @@ export function socketFunctions(playerList: LinkedList): void {
     }
   );
 
-  client.on("update jump", (id: string) => {
-    if (ready) {
-      const player: Player | null = playerList.find(id);
-      if (player) {
-        // Jump animation
-      }
-    }
-  });
-
-  client.on("update roll", (id: string) => {
-    if (ready) {
-      const player: Player | null = playerList.find(id);
-      if (player) {
-        const action = player.mixer.clipAction(animations[3]);
-        player.mixer.stopAllAction();
-        action.setLoop(THREE.LoopOnce, 1);
-        action.play();
-      }
-    }
-  });
-
-  client.on("attack animation", (id: string) => {
-    if (ready) {
-      const player: Player | null = playerList.find(id);
-      if (player) {
-        const action = player.mixer.clipAction(animations[2]);
-        player.mixer.stopAllAction();
-        //action.setLoop(THREE.LoopOnce, 1);
-        action.play();
-      }
-    }
-  });
-
   client.on("update animation", (animation: string, id: string) => {
     if (ready) {
       const player: Player | null = playerList.find(id);
@@ -272,48 +228,26 @@ export function socketFunctions(playerList: LinkedList): void {
     }
   });
 
-  /*
-  client.on("verify hit", (attackerID: string) => {
-    console.log("i got hit");
-    if (!rolling && currentPlayer.targetable) {
-      let attacker = playerList.find(attackerID);
-      if (attacker) {
-        /*const attackingWeaponBox = new THREE.Box3();
-        attackingWeaponBox.setFromObject(attacker.weapon);
-
-        const modelBox = new THREE.Box3();
-        modelBox.setFromObject(currentPlayer.model);
-
-        const weaponHelper = new THREE.Box3Helper(attackingWeaponBox, 0xff0000);
-        scene.add(weaponHelper);
-
-        const modelHelper = new THREE.Box3Helper(modelBox, 0xffff00);
-        scene.add(modelHelper);
-        //console.log(modelBox.intersectsBox(attackingWeaponBox));
-
-        //if (modelBox.intersectsBox(attackingWeaponBox)) {
-        if (true) {
-          currentPlayer.hp -= 10;
-          currentPlayer.targetable = false;
-
-          if (hp) {
-            const currentWidth = parseFloat(hp.style.width);
-            hp.style.width = `${currentPlayer.hp}%`;
-          }
-          console.log(currentPlayer.hp);
-          if (currentPlayer.hp <= 0) {
-            client.emit("player dead", currentPlayer.id);
-            currentPlayer.destroy();
-          }
-        }
-      }
-    }
-  });
-*/
   client.on("switch targetable", (targetID: string) => {
     let target = playerList.find(targetID);
     if (target) {
       target.targetable = true;
+    }
+  });
+
+  client.on("died", (id: string) => {
+    const player: Player | null = playerList.find(id);
+    if (player) {
+      scene.remove(player.model);
+    }
+  });
+
+  client.on("revive", (pos: THREE.Vector3, id: string) => {
+    const player: Player | null = playerList.find(id);
+    if (player) {
+      scene.add(player.model);
+      player.model.position.copy(pos);
+      player.hp = 100;
     }
   });
 

@@ -133,24 +133,8 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("update position", pos, socket.id);
   });
 
-  socket.on("position animation", () => {
-    socket.broadcast.emit("update position animation", socket.id);
-  });
-
   socket.on("player rotation", (rot) => {
     socket.broadcast.emit("update rotation", rot, socket.id);
-  });
-
-  socket.on("player jump", () => {
-    socket.broadcast.emit("update jump", socket.id);
-  });
-
-  socket.on("player roll", () => {
-    socket.broadcast.emit("update roll", socket.id);
-  });
-
-  socket.on("attacking", (attackerID) => {
-    socket.broadcast.emit("attack animation", attackerID);
   });
 
   socket.on("check hit", (attackerID, targetID) => {
@@ -166,7 +150,11 @@ io.on("connection", (socket) => {
   });
 
   socket.on("player dead", () => {
-    socket.broadcast.emit("remove player", socket.id);
+    socket.broadcast.emit("died", socket.id);
+  });
+
+  socket.on("player respawn", (pos) => {
+    socket.broadcast.emit("revive", pos, socket.id);
   });
 
   socket.on("disconnect", () => {

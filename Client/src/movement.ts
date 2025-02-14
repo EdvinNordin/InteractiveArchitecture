@@ -72,7 +72,7 @@ export function PCMovement(delta: number) {
   }
 
   // sets rolling speed
-  if (!rolling) {
+  if (currentPlayer.animation !== "roll") {
     movement.set(0, 0, 0);
     // sets movement vector
     for (let i = 0; i < 4; i++) {
@@ -99,7 +99,7 @@ export function PCMovement(delta: number) {
       client.emit("player jump", currentPlayer.model.position);
     }
     // total movement vector
-    if (inputAmount > 0) {
+    if (inputAmount > 0 && currentPlayer.animation !== "attack") {
       let totDir = new THREE.Vector3(0, 0, 0);
       for (let i = 0; i < 4; i++) {
         totDir.add(movementVector[i].clone());
@@ -135,9 +135,13 @@ export function PCMovement(delta: number) {
       currentPlayer.animation = "idle";
     }
   }
-
   // start rolling
-  if (movementBool[5] && rollReady && !isJumping) {
+  if (
+    movementBool[5] &&
+    rollReady &&
+    !isJumping &&
+    currentPlayer.animation !== "attack"
+  ) {
     currentPlayer.animation = "roll";
     rolling = true;
     rollReady = false;
@@ -147,7 +151,6 @@ export function PCMovement(delta: number) {
   let wallHit = collision(delta, movement);
   if (!wallHit && !movement.equals(new THREE.Vector3(0, 0, 0))) {
     currentPlayer.model.position.add(movement);
-    //currentPlayer.model.quaternion.copy(getYawRotation(quat));
     client.emit("player position", {
       x: currentPlayer.model.position.x,
       y: currentPlayer.model.position.y,
