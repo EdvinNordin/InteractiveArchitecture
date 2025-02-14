@@ -96,41 +96,14 @@ function updateMixers(delta: number) {
         action.reset();
         action.play();
       }
+      if (current.animation === "attack") {
+        isAttacking(current, rolling);
+      }
     }
     current.mixer.update(delta);
     current = current.next;
   }
 }
-/* else if (current.animation !== current.mixer._actions[0]._clip.name) {
-        /*
-    let anyAnimationRunning = false;
-    for (let i = 0; i < animations.length; i++) {
-      if (current.mixer.clipAction(animations[i]).isRunning()) {
-        if (i === 2 && current !== currentPlayer) isAttacking(current, rolling);
-        anyAnimationRunning = true;
-        break;
-      }
-    }
-    if (!anyAnimationRunning) {
-      current.mixer.clipAction(animations[0]).play();
-    }
-    current.mixer.update(delta);*/
-/*if (
-          current.animation !==
-          currentPlayer.mixer._actions.filter((action: any) =>
-            action.isRunning()
-          )[0]._clip.name
-        ) {
-          current.mixer.stopAllAction();
-          current.animation = current.mixer.clipAction(
-            animations[0]
-          )._clip.name;
-          current.mixer
-            .clipAction(getAnimationbyName(current.animation))
-            .play();
-        }
-      }
-*/
 
 function iFrames(delta: number) {
   cd--;
@@ -156,11 +129,10 @@ function isAttacking(attacker: any, rolling: boolean) {
     modelBox.setFromObject(currentPlayer.model);
 
     const weaponHelper = new THREE.Box3Helper(attackingWeaponBox, 0xff0000);
-    scene.add(weaponHelper);
+    //scene.add(weaponHelper);
 
     const modelHelper = new THREE.Box3Helper(modelBox, 0xffff00);
-    scene.add(modelHelper);
-    //console.log(modelBox.intersectsBox(attackingWeaponBox));
+    //scene.add(modelHelper);
 
     if (modelBox.intersectsBox(attackingWeaponBox)) {
       currentPlayer.hp -= 10;
