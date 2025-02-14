@@ -4,6 +4,7 @@
 }
 
 #instructions {
+  display: none;
   position: absolute;
   background-color: rgba(0, 0, 0, 0.5);
   width: 100%;
@@ -30,6 +31,7 @@
 }
 
 #joystick {
+  display: none;
   z-index: 100;
 }
 
@@ -59,18 +61,14 @@
 }
 
 #jumpIMG {
-  display: flex;
-  justify-content: center;
-  /* Center horizontally */
-  align-items: center;
-  /* Center vertically */
-  text-align: center;
+  display: none;
   height: 60%;
   width: 60%;
   transform: scaleX(-1);
 }
 
 #fullscreenButton {
+  display: none;
   position: absolute;
   top: 90%;
   left: 92%;
@@ -84,23 +82,6 @@
   width: 100%;
 }
 
-#sword {
-  position: absolute;
-  background-color: rgba(0, 0, 0, 0);
-  width: 100%;
-  height: 100%;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: end;
-  align-items: end;
-  z-index: 0;
-}
-
-#swordIMG {
-  width: 40%;
-  height: 50%;
-}
 #hp {
   position: absolute;
   width: 30%;
@@ -122,4 +103,11 @@
   height: 10px;
   background-color: white;
   border-radius: 100%;
+}
+
+#deadIMG {
+  display: none;
+  position: absolute;
+  width: 100%;
+  height: 100%;
 }

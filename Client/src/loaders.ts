@@ -25,6 +25,8 @@ export function loadModel() {
             i++;
           }
         });
+        object.castShadow = true;
+        object.receiveShadow = true;
         model = object;
         const animLoader = new FBXLoader();
         animLoader.load("idleAnim.fbx", (anim) => {
@@ -33,18 +35,23 @@ export function loadModel() {
         });
         animLoader.load("runAnim.fbx", (anim) => {
           anim.animations[0].name = "run";
-          //object.animations.push(...anim.animations);
           animations[1] = anim.animations[0];
         });
         animLoader.load("attackAnim.fbx", (anim) => {
           anim.animations[0].name = "attack";
-          //object.animations.push(...anim.animations);
           animations[2] = anim.animations[0];
         });
         animLoader.load("rollAnim.fbx", (anim) => {
           anim.animations[0].name = "roll";
-          //object.animations.push(...anim.animations);
           animations[3] = anim.animations[0];
+        });
+        animLoader.load("hitAnim.fbx", (anim) => {
+          anim.animations[0].name = "hit";
+          animations[4] = anim.animations[0];
+        });
+        animLoader.load("deathAnim.fbx", (anim) => {
+          anim.animations[0].name = "death";
+          animations[5] = anim.animations[0];
           model = object;
           resolve(object);
         });
@@ -95,7 +102,7 @@ export function loadModels(
   const texture = new THREE.TextureLoader().load("/stacked-stones.jpg");
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(50, 50);
+  texture.repeat.set(25, 25);
   planeMesh.material = new THREE.MeshStandardMaterial({
     map: texture,
     side: THREE.FrontSide,

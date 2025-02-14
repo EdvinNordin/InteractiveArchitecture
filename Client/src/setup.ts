@@ -80,7 +80,6 @@ initSky();
 initSAO();
 
 const instructions = document.getElementById("instructions");
-const sword = document.getElementById("sword");
 
 // CSS
 if (!mobile) {

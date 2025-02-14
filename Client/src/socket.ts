@@ -6,10 +6,10 @@ import { rolling } from "./movement";
 import { io, Socket } from "socket.io-client";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 
-//export const client: Socket = io("localhost:3000");
-export const client: Socket = io(
-  "https://interactivearchitecturebackend.onrender.com"
-);
+export const client: Socket = io("localhost:3000");
+// export const client: Socket = io(
+//   "https://interactivearchitecturebackend.onrender.com"
+// );
 
 export let mixerList: any = [];
 export let currentPlayer: Player;
@@ -47,6 +47,9 @@ class Player {
     mixerList.push(this.mixer);
     this.mixer.clipAction(animations[2]).setLoop(THREE.LoopOnce, 1);
     this.mixer.clipAction(animations[3]).setLoop(THREE.LoopOnce, 1);
+    this.mixer.clipAction(animations[4]).setLoop(THREE.LoopOnce, 1);
+    this.mixer.clipAction(animations[5]).setLoop(THREE.LoopOnce, 1);
+    this.mixer.clipAction(animations[5]).clampWhenFinished = true;
     this.next = null;
   }
 
@@ -238,16 +241,19 @@ export function socketFunctions(playerList: LinkedList): void {
   client.on("died", (id: string) => {
     const player: Player | null = playerList.find(id);
     if (player) {
-      scene.remove(player.model);
+      player.hp = 0;
+      player.animation = "death";
+      player.targetable = false;
     }
   });
 
   client.on("revive", (pos: THREE.Vector3, id: string) => {
     const player: Player | null = playerList.find(id);
     if (player) {
-      scene.add(player.model);
       player.model.position.copy(pos);
       player.hp = 100;
+      player.animation = "idle";
+      player.targetable = true;
     }
   });
 

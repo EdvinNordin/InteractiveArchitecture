@@ -99,7 +99,8 @@ export function PCMovement(delta: number) {
       client.emit("player jump", currentPlayer.model.position);
     }
     // total movement vector
-    if (inputAmount > 0 && currentPlayer.animation !== "attack") {
+    if (inputAmount > 0) {
+      // && currentPlayer.animation !== "attack") {
       let totDir = new THREE.Vector3(0, 0, 0);
       for (let i = 0; i < 4; i++) {
         totDir.add(movementVector[i].clone());
@@ -130,7 +131,9 @@ export function PCMovement(delta: number) {
       }
     } else if (
       currentPlayer.animation !== "roll" &&
-      currentPlayer.animation !== "attack"
+      currentPlayer.animation !== "attack" &&
+      currentPlayer.animation !== "hit" &&
+      currentPlayer.animation !== "death"
     ) {
       currentPlayer.animation = "idle";
     }

@@ -3,7 +3,7 @@ import Stats from "three/examples/jsm/libs/stats.module";
 
 import { camera, scene, renderer, mobile } from "./setup";
 import { floorGrid, wallGrid } from "./spatiParti";
-import { loadModels } from "./loaders";
+import { loadModels, weapon } from "./loaders";
 import { PCMovement, mobileMovement, quat, rolling } from "./movement";
 import { hit } from "./combat";
 import { animations } from "./loaders";
@@ -15,6 +15,10 @@ loadModels(floorGrid, wallGrid);
 // stats
 // const stats: Stats = new Stats();
 //document.body.appendChild(stats.dom);
+
+const hp = document.getElementById("hpIMG") as HTMLElement;
+document.getElementById("deadIMG")!.style.display = "none";
+const weaponDamage = 30;
 hit();
 let prevAnim: string = "idle";
 let cd: number = 200;
@@ -53,13 +57,17 @@ function updatePlayers(delta: number, ready: boolean) {
     if (!currentPlayer.targetable) iFrames(delta);
     if (currentPlayer.hp <= 0) {
       respawnTimer--;
-      if (respawnTimer < 0) {
+      if (respawnTimer > 0) {
+        document.getElementById("deadIMG")!.style.display = "";
+      } else {
         currentPlayer.model.position.set(randInt(-5, 5), 0.01, randInt(-5, 5));
         document.getElementById("hpIMG")!.style.width = "100%";
         scene.add(currentPlayer.model);
         client.emit("player respawn", currentPlayer.model.position);
         currentPlayer.hp = 100;
-        respawnTimer = 500;
+        respawnTimer = 1000;
+        document.getElementById("deadIMG")!.style.display = "none";
+        currentPlayer.animation = "idle";
       }
     }
   }
@@ -67,15 +75,41 @@ function updatePlayers(delta: number, ready: boolean) {
 function updateMixers(delta: number) {
   let current: any = playerList.head;
   while (current != null) {
-    if (current === currentPlayer) {
-      const runningActionName = current.mixer._actions.filter((action: any) =>
-        action.isRunning()
-      );
+    const runningActionName = current.mixer._actions.filter((action: any) =>
+      action.isRunning()
+    );
+    if (current !== currentPlayer) {
+      if (current.animation === "attack") {
+        getAttacked(current, rolling);
+      }
 
-      if (runningActionName.length === 0) {
+      if (runningActionName.length === 0 && current.animation !== "death") {
+        current.animation = "idle";
+        let action = current.mixer.clipAction(getAnimationbyName("idle"));
+        current.mixer.stopAllAction();
+        action.reset();
+        action.play();
+      } else if (
+        runningActionName[0] &&
+        current.animation !== runningActionName[0]._clip.name
+      ) {
+        let action = current.mixer.clipAction(
+          getAnimationbyName(current.animation)
+        );
+        current.mixer.stopAllAction();
+        action.reset();
+        action.play();
+      }
+    } else {
+      // currentPlayer animations
+      if (
+        runningActionName.length === 0 &&
+        currentPlayer.animation !== "death"
+      ) {
         currentPlayer.animation = "idle";
         client.emit("new animation", currentPlayer.animation);
         let action = currentPlayer.mixer.clipAction(getAnimationbyName("idle"));
+        currentPlayer.mixer.stopAllAction();
         action.reset();
         action.play();
       } else if (currentPlayer.animation !== prevAnim) {
@@ -88,27 +122,8 @@ function updateMixers(delta: number) {
         action.play();
         prevAnim = currentPlayer.animation;
       }
-    } else {
-      const runningActionName = current.mixer._actions.filter((action: any) =>
-        action.isRunning()
-      );
-      if (runningActionName.length === 0) {
-        current.animation = "idle";
-        let action = current.mixer.clipAction(getAnimationbyName("idle"));
-        action.reset();
-        action.play();
-      } else if (current.animation !== runningActionName[0]._clip.name) {
-        let action = current.mixer.clipAction(
-          getAnimationbyName(current.animation)
-        );
-        current.mixer.stopAllAction();
-        action.reset();
-        action.play();
-      }
-      if (current.animation === "attack") {
-        isAttacking(current, rolling);
-      }
     }
+
     current.mixer.update(delta);
     current = current.next;
   }
@@ -123,9 +138,7 @@ function iFrames(delta: number) {
   }
 }
 
-const hp = document.getElementById("hpIMG") as HTMLElement;
-
-function isAttacking(attacker: any, rolling: boolean) {
+function getAttacked(attacker: any, rolling: boolean) {
   if (!rolling && currentPlayer.targetable) {
     const attackingWeaponBox = new THREE.Box3();
     attackingWeaponBox.setFromObject(attacker.weapon);
@@ -134,16 +147,20 @@ function isAttacking(attacker: any, rolling: boolean) {
     modelBox.setFromObject(currentPlayer.model);
 
     if (modelBox.intersectsBox(attackingWeaponBox)) {
-      currentPlayer.hp -= 40;
+      currentPlayer.hp -= weaponDamage;
       currentPlayer.targetable = false;
 
       if (hp) {
-        if (currentPlayer.hp < 0) currentPlayer.hp = 0;
         hp.style.width = `${currentPlayer.hp}%`;
-      }
-      if (currentPlayer.hp <= 0) {
-        client.emit("player dead", currentPlayer.id);
-        scene.remove(currentPlayer.model);
+        if (currentPlayer.hp < 0) {
+          currentPlayer.animation = "death";
+          currentPlayer.hp = 0;
+          document.getElementById("deadIMG")!.style.display = "";
+          client.emit("player dead", currentPlayer.id);
+          //scene.remove(currentPlayer.model);
+        } else {
+          currentPlayer.animation = "hit";
+        }
       }
     }
   }
