@@ -6,10 +6,10 @@ import { rolling } from "./movement";
 import { io, Socket } from "socket.io-client";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 
-export const client: Socket = io("localhost:3000");
-// export const client: Socket = io(
-//   "https://interactivearchitecturebackend.onrender.com"
-// );
+//export const client: Socket = io("localhost:3000");
+export const client: Socket = io(
+  "https://interactivearchitecturebackend.onrender.com"
+);
 
 export let mixerList: any = [];
 export let currentPlayer: Player;

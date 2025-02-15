@@ -160,6 +160,13 @@ export function PCMovement(delta: number) {
       z: currentPlayer.model.position.z,
     });
   }
+
+  // camera offset and follow
+  camera.position.copy(
+    new THREE.Vector3(0.5, 0, 2)
+      .applyQuaternion(quat)
+      .add(new THREE.Vector3(0, 1, 0).add(currentPlayer.model.position))
+  );
 }
 
 //Mobile
