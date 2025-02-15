@@ -1,5 +1,6 @@
 import * as THREE from "three";
-import { client, currentPlayer } from "./socket";
+import { currentPlayer } from "./network";
+import { client } from "./socket";
 import { quat } from "./movement";
 import { scene } from "./setup";
 import { getYawRotation } from "./utils";

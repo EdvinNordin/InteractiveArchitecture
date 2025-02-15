@@ -1,9 +1,9 @@
 import * as THREE from "three";
-import { camera, scene, mobile } from "./setup";
+import { camera, mobile } from "./setup";
 import { floorGrid, wallGrid, getObjectsInCell } from "./spatiParti";
-import { clamp, getPitchRotation, getYawRotation } from "./utils";
-import { client, ready, playerList, currentPlayer } from "./socket";
-import { animations } from "./loaders";
+import { clamp, getYawRotation } from "./utils";
+import { ready, currentPlayer } from "./network";
+import { client } from "./socket";
 import * as constant from "./constants";
 import nipplejs from "nipplejs";
 import screenfull from "screenfull";

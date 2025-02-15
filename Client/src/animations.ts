@@ -1,5 +1,6 @@
-import { client, ready, currentPlayer, playerList } from "./socket";
-import { PCMovement, mobileMovement, quat, rolling } from "./movement";
+import { currentPlayer, playerList } from "./network";
+import { client } from "./socket";
+import { rolling } from "./movement";
 import { getAttacked } from "./combat";
 import { animations } from "./loaders";
 

@@ -6,7 +6,7 @@ import { floorGrid, wallGrid } from "./spatiParti";
 import { loadModels } from "./loaders";
 import { PCMovement, mobileMovement } from "./movement";
 import { updateMixers } from "./animations";
-import { ready } from "./socket";
+import { ready } from "./network";
 import { combat } from "./combat";
 
 loadModels(floorGrid, wallGrid);
