@@ -1,10 +1,10 @@
-import { currentPlayer, playerList } from "./network";
-import { client } from "./socket";
-import { rolling } from "./movement";
-import { getAttacked } from "./combat";
-import { animations } from "./loaders";
+import { currentPlayer, playerList } from "./utilities/classes";
+import { client } from "./networking/socket";
+import { rolling } from "./controls/movement";
+import { getAttacked } from "./controls/combat";
+import { animations } from "./utilities/loaders";
 
-let prevAnim: string = "idle";
+export let prevAnim: string = "idle";
 
 export function updateMixers(delta: number) {
   let current: any = playerList.head;
@@ -12,29 +12,7 @@ export function updateMixers(delta: number) {
     const runningActionName = current.mixer._actions.filter((action: any) =>
       action.isRunning()
     );
-    if (current !== currentPlayer) {
-      if (current.animation === "attack") {
-        getAttacked(current, rolling);
-      }
-
-      if (runningActionName.length === 0 && current.animation !== "death") {
-        current.animation = "idle";
-        let action = current.mixer.clipAction(getAnimationbyName("idle"));
-        current.mixer.stopAllAction();
-        action.reset();
-        action.play();
-      } else if (
-        runningActionName[0] &&
-        current.animation !== runningActionName[0]._clip.name
-      ) {
-        let action = current.mixer.clipAction(
-          getAnimationbyName(current.animation)
-        );
-        current.mixer.stopAllAction();
-        action.reset();
-        action.play();
-      }
-    } else {
+    if (current === currentPlayer) {
       // currentPlayer animations
       if (
         runningActionName.length === 0 &&
@@ -55,6 +33,28 @@ export function updateMixers(delta: number) {
         action.reset();
         action.play();
         prevAnim = currentPlayer.animation;
+      }
+    } else {
+      if (current.animation === "attack") {
+        getAttacked(current, rolling);
+      }
+
+      if (runningActionName.length === 0 && current.animation !== "death") {
+        current.animation = "idle";
+        let action = current.mixer.clipAction(getAnimationbyName("idle"));
+        current.mixer.stopAllAction();
+        action.reset();
+        action.play();
+      } else if (
+        runningActionName[0] &&
+        current.animation !== runningActionName[0]._clip.name
+      ) {
+        let action = current.mixer.clipAction(
+          getAnimationbyName(current.animation)
+        );
+        current.mixer.stopAllAction();
+        action.reset();
+        action.play();
       }
     }
 

@@ -1,13 +1,14 @@
 import * as THREE from "three";
 import Stats from "three/examples/jsm/libs/stats.module";
 
-import { camera, scene, renderer, mobile } from "./setup";
-import { floorGrid, wallGrid } from "./spatiParti";
-import { loadModels } from "./loaders";
-import { PCMovement, mobileMovement } from "./movement";
+import { camera, scene, renderer, mobile } from "./utilities/setup";
+import { floorGrid, wallGrid } from "./utilities/spatial";
+import { loadModels } from "./utilities/loaders";
+import { PCMovement } from "./controls/movement";
+import { mobileMovement } from "./controls/mobile";
 import { updateMixers } from "./animations";
-import { ready } from "./network";
-import { combat } from "./combat";
+import { ready } from "./utilities/classes";
+import { combat } from "./controls/combat";
 
 loadModels(floorGrid, wallGrid);
 
