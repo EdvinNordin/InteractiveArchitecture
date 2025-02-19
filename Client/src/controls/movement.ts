@@ -213,13 +213,13 @@ function collision(delta: number, moveDir: THREE.Vector3) {
     5
   );
   downRay.layers.set(0);
-  let downRayhelper = new THREE.ArrowHelper(
-    downRay.ray.direction,
-    downRay.ray.origin,
-    5,
-    0xff0000
-  );
-  scene.add(downRayhelper);
+  // let downRayhelper = new THREE.ArrowHelper(
+  //   downRay.ray.direction,
+  //   downRay.ray.origin,
+  //   5,
+  //   0xff0000
+  // );
+  // scene.add(downRayhelper);
 
   let distanceToFloor = 1000;
   let closestFloorInfo = findClosestObject(currentCell, floorGrid, downRay);
