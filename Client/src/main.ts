@@ -9,7 +9,7 @@ import { mobileMovement } from "./controls/mobile";
 import { updateMixers } from "./animations";
 import { ready } from "./utilities/classes";
 import { combat } from "./controls/combat";
-
+import { composer } from "./utilities/setup";
 loadModels(floorGrid, wallGrid);
 
 // const stats: Stats = new Stats();
@@ -18,6 +18,9 @@ loadModels(floorGrid, wallGrid);
 const clock = new THREE.Clock();
 let delta;
 
+// window.onerror = function () {
+//   location.reload();
+// };
 // ANIMATION LOOP ######################################################################
 animate();
 function animate() {
@@ -29,7 +32,7 @@ function animate() {
 
   renderer.render(scene, camera);
 
-  //composer.render();
+  composer.render();
   //stats.update();
 }
 

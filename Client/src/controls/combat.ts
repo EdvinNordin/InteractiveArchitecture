@@ -1,8 +1,7 @@
 import * as THREE from "three";
 import { currentPlayer } from "../utilities/classes";
 import { client } from "../networking/socket";
-import { quat } from "./movement";
-import { scene } from "../utilities/setup";
+import { scene, camera } from "../utilities/setup";
 import { getYawRotation } from "../utilities/utils";
 import { randInt } from "three/src/math/MathUtils";
 
@@ -18,7 +17,7 @@ document.addEventListener("mousedown", (e) => {
       currentPlayer.animation !== "attack" &&
       currentPlayer.animation !== "roll"
     ) {
-      currentPlayer.model.quaternion.copy(getYawRotation(quat));
+      currentPlayer.model.quaternion.copy(getYawRotation(camera.quaternion));
       client.emit("player rotation", {
         x: currentPlayer.model.quaternion.x,
         y: currentPlayer.model.quaternion.y,

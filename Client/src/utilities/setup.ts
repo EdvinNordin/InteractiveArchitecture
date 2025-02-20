@@ -7,10 +7,9 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 // @ts-ignore
 import { Sky } from "../others/sky.js";
 
-let sky, sun, composer, renderPass, saoPass;
+let sky, sun, composer: any, renderPass, saoPass;
 
 const scene = new THREE.Scene();
-
 //Renderer setup
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.shadowMap.enabled = true;
@@ -49,7 +48,7 @@ let camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
-  10000
+  100000
 );
 
 //Light setup
@@ -147,7 +146,7 @@ function initSky() {
   sun.setFromSphericalCoords(1, phi, theta);
 
   uniforms["sunPosition"].value.copy(sun);
-  dirLight.position.copy(sun).multiplyScalar(100);
+  dirLight.position.copy(sun).multiplyScalar(10000);
 
   renderer.toneMappingExposure = effectController.exposure;
   renderer.render(scene, camera);
@@ -157,21 +156,24 @@ function initSAO() {
   composer = new EffectComposer(renderer);
   renderPass = new RenderPass(scene, camera);
   composer.addPass(renderPass);
-  saoPass = new SAOPass(scene, camera);
-  composer.addPass(saoPass);
+
+  // saoPass = new SAOPass(scene, camera);
+  // composer.addPass(saoPass);
+  // const renderPixelatedPass = new RenderPixelatedPass(4, scene, camera);
+  // composer.addPass(renderPixelatedPass);
   const outputPass = new OutputPass();
   composer.addPass(outputPass);
 
-  saoPass.params.saoBias = 0.5;
-  saoPass.params.saoIntensity = 0.18;
-  saoPass.params.saoScale = 5;
-  saoPass.params.saoKernelRadius = 100;
-  saoPass.params.saoMinResolution = 0;
-  saoPass.params.saoBlur = true;
-  saoPass.params.saoBlurRadius = 8;
-  saoPass.params.saoBlurStdDev = 4;
-  saoPass.params.saoBlurDepthCutoff = 0.01;
-  saoPass.enabled = false;
+  // saoPass.params.saoBias = 0.5;
+  // saoPass.params.saoIntensity = 0.0018;
+  // saoPass.params.saoScale = 0.3;
+  // saoPass.params.saoKernelRadius = 40;
+  // saoPass.params.saoMinResolution = 0;
+  // saoPass.params.saoBlur = false;
+  // saoPass.params.saoBlurRadius = 8;
+  // saoPass.params.saoBlurStdDev = 4;
+  // saoPass.params.saoBlurDepthCutoff = 0.01;
+  // saoPass.enabled = true;
 }
 
 function onWindowResize() {

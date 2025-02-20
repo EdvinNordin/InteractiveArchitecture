@@ -96,42 +96,32 @@ export function loadModels(
   floorGrid: { [key: string]: THREE.Object3D[] },
   wallGrid: { [key: string]: THREE.Object3D[] }
 ) {
-  /*
   const mountLoader = new FBXLoader();
   mountLoader.load(
     "/mountains2.fbx",
     function (object) {
-      object.scale.setScalar(1);
+      object.scale.set(100, 100, 100);
       scene.add(object);
-      object.position.set(0, -10, 0);
-      let box = new THREE.Box3().setFromObject(object, false);
-      let size = box.getSize(new THREE.Vector3());
-      object.name = "mountains";
-      const boxHelper = new THREE.Box3Helper(box, 0xffff00);
-      scene.add(boxHelper);
-      object.layers.enable(0);
-      setObjectCells(object, floorGrid);
-      // scene.add(box);
-      console.log(size);
+      object.position.set(0, -1000, 0);
     },
     function (xhr) {
-      console.log((xhr.loaded / xhr.total) * 100 + "%");
+      //console.log((xhr.loaded / xhr.total) * 100 + "%");
     },
     function (error) {
       console.error("Error loading mountains.fbx:", error);
     }
-  );*/
+  );
 
   let planeMesh = new THREE.Mesh();
-  planeMesh.geometry = new THREE.PlaneGeometry(100, 100, 1, 1);
+  planeMesh.geometry = new THREE.PlaneGeometry(1000, 1000, 1, 1);
   planeMesh.rotation.x = -Math.PI / 2;
 
-  const texture = new THREE.TextureLoader().load("/stacked-stones.jpg");
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(25, 25);
+  // const texture = new THREE.TextureLoader().load("/stacked-stones.jpg");
+  // texture.wrapS = THREE.RepeatWrapping;
+  // texture.wrapT = THREE.RepeatWrapping;
+  // texture.repeat.set(25, 25);
   planeMesh.material = new THREE.MeshStandardMaterial({
-    map: texture,
+    color: 0xffffff,
     side: THREE.FrontSide,
   });
 

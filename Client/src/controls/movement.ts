@@ -1,12 +1,17 @@
 import * as THREE from "three";
 import { camera } from "../utilities/setup";
 import { floorGrid, wallGrid, getObjectsInCell } from "../utilities/spatial";
-import { clamp, getYawRotation } from "../utilities/utils";
+import {
+  getPitchRotation,
+  getYawRotation,
+  getPitchandYawRotation,
+} from "../utilities/utils";
 import { currentPlayer } from "../utilities/classes";
 import { prevAnim } from "../animations";
 import { scene } from "../utilities/setup";
 import { client } from "../networking/socket";
 import * as constant from "../utilities/constants";
+import { TrackballControls } from "three/examples/jsm/controls/TrackballControls.js";
 
 let isJumping = false;
 let jumpHeight = 0;
@@ -31,14 +36,15 @@ let movementVector: [
   new THREE.Vector3(0, 0, 0),
   new THREE.Vector3(0, 0, 0),
 ];
+const trackball = new TrackballControls(camera, document.body);
 
 // rotation
 let phi: number = 0;
 let theta: number = 0;
 
-export let quat: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1);
-let quatX: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1);
-let quatZ: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1);
+// export let quat: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1);
+// let quatX: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1);
+// let quatZ: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1);
 
 // mobile
 export let rolling: boolean = false;
@@ -80,7 +86,7 @@ export function PCMovement(delta: number) {
           constant.movementDir[i].z * speed
         );
         movementVector[i] = movementVector[i].applyQuaternion(
-          getYawRotation(quat)
+          getYawRotation(camera.quaternion)
         );
         movementVector[i].y = 0;
         inputAmount++;
@@ -163,7 +169,7 @@ export function PCMovement(delta: number) {
   // camera offset and follow
   camera.position.copy(
     new THREE.Vector3(0.5, 0, 2)
-      .applyQuaternion(quat)
+      .applyQuaternion(camera.quaternion)
       .add(new THREE.Vector3(0, 1, 0).add(currentPlayer.model.position))
   );
 
@@ -254,7 +260,7 @@ function collision(delta: number, moveDir: THREE.Vector3) {
 
   // WALL COLLISION DETECTION
   let forwardRay = new THREE.Raycaster(
-    currentPlayer.model.position,
+    new THREE.Vector3(0, 0.5, 0).add(currentPlayer.model.position),
     moveDir,
     0,
     5
@@ -305,6 +311,10 @@ function findClosestObject(
 }
 
 // EVENT LISTENERS ############################################################################################################
+let quatX = new THREE.Quaternion();
+let quatZ = new THREE.Quaternion();
+let quat = new THREE.Quaternion();
+let quaternion = new THREE.Quaternion(1, 0, 0, 0); // Initial quaternion (no rotation)
 
 // ROTATION
 document.addEventListener("mousemove", (e) => {
@@ -313,7 +323,7 @@ document.addEventListener("mousemove", (e) => {
     const yh = e.movementY * 0.001;
 
     phi -= xh;
-    theta = clamp(theta - yh, -Math.PI / 2, Math.PI / 2);
+    theta = Math.min(Math.max(theta - yh, -Math.PI / 2), Math.PI / 2);
 
     quatZ = new THREE.Quaternion();
     quatX.setFromAxisAngle(new THREE.Vector3(0, 1, 0), phi);
