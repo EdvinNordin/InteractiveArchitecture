@@ -13,6 +13,7 @@ export function updateMixers(delta: number) {
       action.isRunning()
     );
     if (current === currentPlayer) {
+      //if (runningActionName[0]) console.log(runningActionName[0]._clip.name);
       // currentPlayer animations
       if (
         runningActionName.length === 0 &&
@@ -24,6 +25,7 @@ export function updateMixers(delta: number) {
         currentPlayer.mixer.stopAllAction();
         action.reset();
         action.play();
+        prevAnim = currentPlayer.animation;
       } else if (currentPlayer.animation !== prevAnim) {
         client.emit("new animation", currentPlayer.animation);
         let action = currentPlayer.mixer.clipAction(

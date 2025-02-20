@@ -13,7 +13,7 @@ export class Player {
   model: THREE.Object3D;
   pos: THREE.Vector3;
   rot: THREE.Quaternion;
-  weapon: THREE.Object3D;
+  weapon: THREE.Object3D | null;
   mixer: THREE.AnimationMixer;
   animation: string;
   next: Player | null;
@@ -25,17 +25,17 @@ export class Player {
     this.model.scale.setScalar(0.0025);
     this.pos = this.model.position.set(pos.x, pos.y, pos.z);
     this.rot = this.model.quaternion.set(rot.x, rot.y, rot.z, rot.w);
-
+    this.weapon = null;
     scene.add(this.model);
     this.model.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
         child.receiveShadow = true;
+        if (child.name === "Sword_Cube004") {
+          this.weapon = child;
+        }
       }
     });
-    this.weapon = weapon.clone();
-    this.weapon.castShadow = true;
-    this.weapon.receiveShadow = true;
     this.mixer = new THREE.AnimationMixer(this.model);
     this.mixer.clipAction(animations[0]).play();
     this.animation = "idle";

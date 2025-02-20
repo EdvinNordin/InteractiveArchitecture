@@ -33,16 +33,19 @@ document.addEventListener("mousedown", (e) => {
 export function getAttacked(attacker: any, rolling: boolean) {
   if (attacker === currentPlayer) return;
   if (
-    !rolling &&
+    currentPlayer.animation !== "roll" &&
     currentPlayer.animation !== "hit" &&
     currentPlayer.animation !== "death"
   ) {
     const attackingWeaponBox = new THREE.Box3();
     attackingWeaponBox.setFromObject(attacker.weapon);
+    // let weaponHelper = new THREE.Box3Helper(attackingWeaponBox, 0xffff00);
+    // scene.add(weaponHelper);
 
     const modelBox = new THREE.Box3();
     modelBox.setFromObject(currentPlayer.model);
-    console.log("got hit");
+    // let modelHelper = new THREE.Box3Helper(modelBox, 0xff0000);
+    // scene.add(modelHelper);
 
     if (modelBox.intersectsBox(attackingWeaponBox)) {
       currentPlayer.hp -= weaponDamage;
