@@ -13,11 +13,16 @@ export function updateMixers(delta: number) {
       action.isRunning()
     );
     if (
-      current.animation === "idle" &&
+      current.animation === "hit" &&
       runningActionName[0] &&
-      runningActionName[0]._clip.name === "hit"
+      runningActionName[0]._clip.name === "idle"
     ) {
-      current.animation = "idle";
+      let action = currentPlayer.mixer.clipAction(
+        getAnimationbyName(currentPlayer.animation)
+      );
+      currentPlayer.mixer.stopAllAction();
+      action.reset();
+      action.play();
     }
 
     if (current === currentPlayer) {
