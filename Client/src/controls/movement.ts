@@ -167,35 +167,34 @@ export function PCMovement(delta: number) {
       .add(new THREE.Vector3(0, 1, 0).add(currentPlayer.model.position))
   );
 
-  // let cameraRay = new THREE.Raycaster(
-  //   currentPlayer.model.position,
-  //   camera.position.clone().sub(currentPlayer.model.position).normalize(),
-  //   0,
-  //   2
-  // );
+  // camera collision
+  let cameraRay = new THREE.Raycaster(
+    new THREE.Vector3(0, 1, 0).add(currentPlayer.model.position),
+    camera.position
+      .clone()
+      .sub(new THREE.Vector3(0, 1, 0).add(currentPlayer.model.position)),
+    0,
+    2
+  );
 
-  // let currentCell = new THREE.Vector3(
-  //   currentPlayer.model.position.x,
-  //   currentPlayer.model.position.y,
-  //   currentPlayer.model.position.z
-  // );
-  // let cameraHitFloor: number = findClosestObject(
-  //   currentCell,
-  //   floorGrid,
-  //   cameraRay
-  // )[0] as number;
-  // let cameraHitWall = findClosestObject(currentCell, wallGrid, cameraRay);
-  // console.log(cameraHitFloor);
+  let currentCell = new THREE.Vector3(
+    currentPlayer.model.position.x,
+    currentPlayer.model.position.y,
+    currentPlayer.model.position.z
+  );
+  let cameraHitFloor: any = findClosestObject(
+    currentCell,
+    floorGrid,
+    cameraRay
+  );
+  let cameraHitWall: any = findClosestObject(currentCell, wallGrid, cameraRay);
 
-  // if (cameraHitFloor < 1.5) {
-  //   camera.position.copy(
-  //     camera.position
-  //       .clone()
-  //       .sub(currentPlayer.model.position)
-  //       .normalize()
-  //       .multiplyScalar(cameraHitFloor)
-  //   );
-  // }
+  if (cameraHitFloor[1]) {
+    camera.position.copy(cameraHitFloor[1].point);
+  }
+  if (cameraHitWall[1]) {
+    camera.position.copy(cameraHitWall[1].point);
+  }
 }
 
 function collision(delta: number, moveDir: THREE.Vector3) {
