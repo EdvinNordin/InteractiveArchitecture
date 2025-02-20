@@ -33,7 +33,6 @@ export function updateMixers(delta: number) {
         currentPlayer.mixer.stopAllAction();
         action.reset();
         action.play();
-        prevAnim = currentPlayer.animation;
       } else if (currentPlayer.animation !== prevAnim) {
         client.emit("new animation", currentPlayer.animation);
         let action = currentPlayer.mixer.clipAction(
