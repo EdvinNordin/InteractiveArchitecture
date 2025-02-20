@@ -12,21 +12,17 @@ export function updateMixers(delta: number) {
     const runningActionName = current.mixer._actions.filter((action: any) =>
       action.isRunning()
     );
-    if (
-      current.animation === "hit" &&
-      runningActionName[0] &&
-      runningActionName[0]._clip.name === "idle"
-    ) {
-      let action = currentPlayer.mixer.clipAction(
-        getAnimationbyName(currentPlayer.animation)
-      );
-      currentPlayer.mixer.stopAllAction();
-      action.reset();
-      action.play();
-    }
 
     if (current === currentPlayer) {
-      //if (runningActionName[0]) console.log(runningActionName[0]._clip.name);
+      // if (runningActionName[0]) {
+      //   console.log(
+      //     currentPlayer.animation,
+      //     prevAnim,
+      //     runningActionName[0]._clip.name
+      //   );
+      // } else {
+      //   console.log(currentPlayer.animation, prevAnim);
+      // }
       // currentPlayer animations
       if (
         runningActionName.length === 0 &&
@@ -38,7 +34,11 @@ export function updateMixers(delta: number) {
         currentPlayer.mixer.stopAllAction();
         action.reset();
         action.play();
-      } else if (currentPlayer.animation !== prevAnim) {
+      } else if (
+        runningActionName[0] &&
+        currentPlayer.animation !== runningActionName[0]._clip.name
+      ) {
+        //prevAnim) {
         client.emit("new animation", currentPlayer.animation);
         let action = currentPlayer.mixer.clipAction(
           getAnimationbyName(currentPlayer.animation)
