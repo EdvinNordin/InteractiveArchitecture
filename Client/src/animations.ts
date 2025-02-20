@@ -12,6 +12,14 @@ export function updateMixers(delta: number) {
     const runningActionName = current.mixer._actions.filter((action: any) =>
       action.isRunning()
     );
+    if (
+      current.animation === "idle" &&
+      runningActionName[0] &&
+      runningActionName[0]._clip.name === "hit"
+    ) {
+      current.animation = "idle";
+    }
+
     if (current === currentPlayer) {
       //if (runningActionName[0]) console.log(runningActionName[0]._clip.name);
       // currentPlayer animations
