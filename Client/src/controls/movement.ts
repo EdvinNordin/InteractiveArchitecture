@@ -8,10 +8,9 @@ import {
 } from "../utilities/utils";
 import { currentPlayer } from "../utilities/classes";
 import { prevAnim } from "../animations";
-import { scene } from "../utilities/setup";
+import { listener } from "../utilities/setup";
 import { client } from "../networking/socket";
 import * as constant from "../utilities/constants";
-import { TrackballControls } from "three/examples/jsm/controls/TrackballControls.js";
 
 let isJumping = false;
 let jumpHeight = 0;
@@ -36,7 +35,6 @@ let movementVector: [
   new THREE.Vector3(0, 0, 0),
   new THREE.Vector3(0, 0, 0),
 ];
-const trackball = new TrackballControls(camera, document.body);
 
 // rotation
 let phi: number = 0;
@@ -72,7 +70,11 @@ export function PCMovement(delta: number) {
     rollingTimer = rollCD;
   }
 
-  if (currentPlayer.animation === "idle" || currentPlayer.animation === "run") {
+  if (
+    currentPlayer.animation === "idle" ||
+    currentPlayer.animation === "run" ||
+    currentPlayer.animation === "attack"
+  ) {
     // set running speed
     movement.set(0, 0, 0);
     // sets movement vector
@@ -101,7 +103,6 @@ export function PCMovement(delta: number) {
     }
     // total movement vector
     if (inputAmount > 0) {
-      // && currentPlayer.animation !== "attack") {
       let totDir = new THREE.Vector3(0, 0, 0);
       for (let i = 0; i < 4; i++) {
         totDir.add(movementVector[i].clone());
@@ -123,7 +124,10 @@ export function PCMovement(delta: number) {
       });
 
       // running animation
-      if (currentPlayer.animation !== "run") {
+      if (
+        currentPlayer.animation !== "run" &&
+        currentPlayer.animation !== "attack"
+      ) {
         currentPlayer.animation = "run";
       }
     } else if (currentPlayer.animation === "run") {
@@ -152,9 +156,10 @@ export function PCMovement(delta: number) {
   // ) {
   //   movement.multiplyScalar(0.1);
   // }
-  if (currentPlayer.animation === "attack") {
-    movement.multiplyScalar(0);
-  }
+
+  // if (currentPlayer.animation === "attack") {
+  //   movement.multiplyScalar(0);
+  // }
 
   let wallHit = collision(delta, movement);
   if (!wallHit && !movement.equals(new THREE.Vector3(0, 0, 0))) {
@@ -203,6 +208,25 @@ export function PCMovement(delta: number) {
   }
 }
 
+// AUDIO SETUP
+const sound = new THREE.Audio(listener);
+const audioLoader = new THREE.AudioLoader();
+const soundButton = document.getElementById("sound");
+let soundBool = false;
+if (soundButton) {
+  soundButton.onclick = () => {
+    if (soundBool) {
+      soundBool = false;
+      soundButton.innerHTML = "🔇";
+      return;
+    } else {
+      soundBool = true;
+      soundButton.innerHTML = "🔊";
+      return;
+    }
+  };
+}
+
 function collision(delta: number, moveDir: THREE.Vector3) {
   let currentCell = new THREE.Vector3(
     currentPlayer.model.position.x,
@@ -248,16 +272,32 @@ function collision(delta: number, moveDir: THREE.Vector3) {
       jumpHeight = 0;
     }
   } else if (closestFloor) {
-    if (distanceToFloor < 0.34) {
-      currentPlayer.model.position.y += distanceToFloor;
-    } else {
-      currentPlayer.model.position.y -= distanceToFloor - 0.35;
-    }
-  } else {
-    //falling
-    isJumping = true;
-  }
+    if (!isJumping) {
+      if (
+        currentPlayer.animation === "run" &&
+        sound.isPlaying === false &&
+        soundBool
+      ) {
+        audioLoader.load("./low.wav", function (buffer) {
+          sound.stop();
+          sound.setBuffer(buffer);
+          sound.setLoop(false);
+          sound.setVolume(1);
+          sound.playbackRate = 0.31;
+          sound.play();
+        });
+      }
 
+      if (distanceToFloor < 0.34) {
+        currentPlayer.model.position.y += distanceToFloor;
+      } else {
+        currentPlayer.model.position.y -= distanceToFloor - 0.35;
+      }
+    } else {
+      //falling
+      isJumping = true;
+    }
+  }
   // WALL COLLISION DETECTION
   let forwardRay = new THREE.Raycaster(
     new THREE.Vector3(0, 0.5, 0).add(currentPlayer.model.position),

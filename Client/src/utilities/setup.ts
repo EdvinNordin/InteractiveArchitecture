@@ -71,7 +71,7 @@ hemiLight.groundColor.setHSL(0.095, 1, 0.85);
 //hemiLight.groundColor.setRGB(0.85, 0.85, 0.71);
 scene.add(hemiLight);
 
-let ambientLight = new THREE.AmbientLight(0x404040);
+// let ambientLight = new THREE.AmbientLight(0x404040);
 //scene.add(ambientLight);
 
 window.addEventListener("resize", onWindowResize);
@@ -82,8 +82,21 @@ initSky();
 //Scalable Ambient Occlusion (SAO)
 initSAO();
 
-const instructions = document.getElementById("instructions");
+const listener = new THREE.AudioListener();
+camera.add(listener);
+const bgmusic = new THREE.Audio(listener);
+const bgaudioLoader = new THREE.AudioLoader();
+bgaudioLoader.load("./AbyssWatchers.mp3", function (buffer) {
+  bgmusic.stop();
+  bgmusic.setBuffer(buffer);
+  bgmusic.setLoop(true);
+  bgmusic.setVolume(0.2);
+});
 
+const music = document.getElementById("music");
+const sound = document.getElementById("sound");
+const all = document.getElementById("all");
+const instructions = document.getElementById("instructions");
 // CSS
 if (!mobile) {
   const jumpButton = document.getElementById("jumpButton");
@@ -94,20 +107,34 @@ if (!mobile) {
   if (fullscreenButton) {
     fullscreenButton.style.display = "none";
   }
-  document.body.onclick = () => {
-    if (document.pointerLockElement !== document.body) {
-      document.body.requestPointerLock();
-    }
-  };
+  if (all) {
+    all.onclick = () => {
+      if (document.pointerLockElement !== document.body) {
+        document.body.requestPointerLock();
+      }
+    };
+  }
 
   document.addEventListener("pointerlockchange", (e) => {
     if (document.pointerLockElement === document.body) {
       if (instructions) {
         instructions.style.display = "none";
       }
+      if (music) {
+        music.style.display = "none";
+      }
+      if (sound) {
+        sound.style.display = "none";
+      }
     } else {
       if (instructions) {
         instructions.style.display = "";
+      }
+      if (music) {
+        music.style.display = "";
+      }
+      if (sound) {
+        sound.style.display = "";
       }
     }
   });
@@ -116,7 +143,19 @@ if (!mobile) {
     instructions.style.display = "none";
   }
 }
-
+if (music) {
+  music.onclick = () => {
+    if (bgmusic.isPlaying) {
+      bgmusic.pause();
+      music.innerHTML = "▶️";
+      return;
+    } else {
+      bgmusic.play();
+      music.innerHTML = "⏸️";
+      return;
+    }
+  };
+}
 function initSky() {
   sky = new Sky();
   sky.scale.setScalar(450000);
@@ -146,7 +185,7 @@ function initSky() {
   sun.setFromSphericalCoords(1, phi, theta);
 
   uniforms["sunPosition"].value.copy(sun);
-  dirLight.position.copy(sun).multiplyScalar(10000);
+  dirLight.position.copy(sun).multiplyScalar(100);
 
   renderer.toneMappingExposure = effectController.exposure;
   renderer.render(scene, camera);
@@ -182,4 +221,4 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-export { camera, scene, renderer, composer };
+export { camera, scene, renderer, composer, listener };

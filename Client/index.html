@@ -8,28 +8,33 @@
   </head>
 
   <body>
-    <div id="instructions">
-      <p style="font-size: 36px">Click to play</p>
-      <p>
-        Move: WASD<br />
-        Look: MOUSE<br />
-        Jump: Spacebar
-      </p>
-    </div>
-    <div id="dead"><img src="dead.png" id="deadIMG" /></div>
-    <div id="midDot"></div>
+    <div id="sound">🔇</div>
+    <div id="music">▶️</div>
+    <div id="all">
+      <div id="instructions">
+        <p style="font-size: 36px">Click to play</p>
+        <p>
+          Move: WASD<br />
+          Look: MOUSE<br />
+          Jump: Spacebar
+        </p>
+      </div>
 
-    <div id="cooldownTimer"><img src="roll.png" id="roll" /></div>
+      <div id="dead"><img src="dead.png" id="deadIMG" /></div>
+      <div id="midDot"></div>
 
-    <div id="hpContainer">
-      <div id="hp"></div>
+      <div id="cooldownTimer"><img src="roll.png" id="roll" /></div>
+
+      <div id="hpContainer">
+        <div id="hp"></div>
+      </div>
+      <div id="jumpButton"><img src="jump.png" id="jumpIMG" /></div>
+      <div id="fullscreenButton">
+        <img src="fullscreen.svg" id="fullscreenIMG" />
+      </div>
+      <div id="right"></div>
+      <div id="joystick"></div>
     </div>
-    <div id="jumpButton"><img src="jump.png" id="jumpIMG" /></div>
-    <div id="fullscreenButton">
-      <img src="fullscreen.svg" id="fullscreenIMG" />
-    </div>
-    <div id="right"></div>
-    <div id="joystick"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
