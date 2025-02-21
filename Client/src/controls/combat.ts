@@ -6,6 +6,7 @@ import { getYawRotation } from "../utilities/utils";
 import { randInt } from "three/src/math/MathUtils";
 
 const hp = document.getElementById("hp") as HTMLElement;
+const currentHP = document.getElementById("currentHP") as HTMLElement;
 document.getElementById("deadIMG")!.style.display = "none";
 const weaponDamage = 20;
 let cd: number = 200;
@@ -60,6 +61,7 @@ export function getAttacked(attacker: any, rolling: boolean) {
           currentPlayer.animation = "hit";
         }
         hp.style.width = `${currentPlayer.hp}%`;
+        currentHP.innerHTML = `${currentPlayer.hp}%`;
       }
     }
   }
@@ -89,6 +91,7 @@ function dead() {
     scene.add(currentPlayer.model);
     client.emit("player respawn", currentPlayer.model.position);
     currentPlayer.hp = 100;
+    currentHP.innerHTML = `${currentPlayer.hp}%`;
     respawnTimer = 1000;
     document.getElementById("deadIMG")!.style.display = "none";
     currentPlayer.animation = "idle";
