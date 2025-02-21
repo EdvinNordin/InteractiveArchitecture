@@ -3,7 +3,7 @@ import { currentPlayer } from "../utilities/classes";
 import { client } from "../networking/socket";
 import { scene, camera } from "../utilities/setup";
 import { getYawRotation } from "../utilities/utils";
-import { randInt } from "three/src/math/MathUtils";
+import { randFloat } from "three/src/math/MathUtils";
 
 const hp = document.getElementById("hp") as HTMLElement;
 const currentHP = document.getElementById("currentHP") as HTMLElement;
@@ -84,9 +84,10 @@ function iFrames(delta: number) {
 function dead() {
   respawnTimer--;
   if (respawnTimer > 0) {
-    document.getElementById("deadIMG")!.style.display = "";
+    //document.getElementById("deadIMG")!.style.display = "";
   } else {
-    currentPlayer.model.position.set(randInt(-5, 5), 0.01, randInt(-5, 5));
+    currentPlayer.model.position.set(randFloat(-5, 5), 0.01, randFloat(-5, 5));
+    console.log(currentPlayer.model.position);
     document.getElementById("hp")!.style.width = "100%";
     scene.add(currentPlayer.model);
     client.emit("player respawn", currentPlayer.model.position);

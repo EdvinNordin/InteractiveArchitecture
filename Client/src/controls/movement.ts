@@ -1,11 +1,7 @@
 import * as THREE from "three";
 import { camera } from "../utilities/setup";
 import { floorGrid, wallGrid, getObjectsInCell } from "../utilities/spatial";
-import {
-  getPitchRotation,
-  getYawRotation,
-  getPitchandYawRotation,
-} from "../utilities/utils";
+import { getYawRotation } from "../utilities/utils";
 import { currentPlayer } from "../utilities/classes";
 import { prevAnim } from "../animations";
 import { listener } from "../utilities/setup";

@@ -4,7 +4,6 @@ const http = require("http");
 const server = http.createServer(app);
 const cors = require("cors");
 const mime = require("mime");
-const { randomInt } = require("crypto");
 
 const allowedOrigins = [
   "https://interactivearchitecture.onrender.com",
@@ -42,7 +41,11 @@ class Player {
   constructor(id) {
     this.id = id;
     this.next = null;
-    this.pos = { x: randomInt(0, 5), y: 0.01, z: randomInt(0, 5) };
+    let min = -5;
+    let max = 5;
+    let randomX = Math.floor(Math.random() * (max - min + 1)) + min;
+    let randomY = Math.floor(Math.random() * (max - min + 1)) + min;
+    this.pos = { x: randomX, y: 0.01, z: randomY };
     this.rot = { x: 0, y: 0, z: 0, w: 0 };
   }
 }

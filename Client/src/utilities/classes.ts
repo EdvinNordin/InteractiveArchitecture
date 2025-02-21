@@ -3,7 +3,7 @@ import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import { client } from "../networking/socket";
 import { scene } from "./setup";
 import { socketFunctions } from "../networking/network";
-import { loadModel, animations, weapon, model } from "./loaders";
+import { loadModel, animations, model } from "./loaders";
 export let mixerList: any = [];
 export let currentPlayer: Player;
 
