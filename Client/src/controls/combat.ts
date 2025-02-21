@@ -14,6 +14,7 @@ let respawnTimer: number = 500;
 document.addEventListener("mousedown", (e) => {
   if (document.pointerLockElement === document.body) {
     if (
+      e.button === 0 &&
       currentPlayer.animation !== "attack" &&
       currentPlayer.animation !== "roll"
     ) {
